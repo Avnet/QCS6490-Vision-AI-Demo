@@ -13,6 +13,7 @@ TIME_KEY = "time"
 CPU_UTIL_KEY = "cpu %"
 MEM_UTIL_KEY = "lpddr5 %"
 GPU_UTIL_KEY = "gpu %"
+DSP_UTIL_KEY = "dsp %"
 CPU_THERMAL_KEY = "cpu temp (°c)"
 MEM_THERMAL_KEY = "lpddr5 temp (°c)"
 GPU_THERMAL_KEY = "gpu temp (°c)"
@@ -21,6 +22,7 @@ GPU_THERMAL_KEY = "gpu temp (°c)"
 TRIA_PINK_RGBH = (0xFE, 0x00, 0xA2)
 TRIA_BLUE_RGBH = (0x00, 0xA2, 0xFE)
 TRIA_YELLOW_RGBH = (0xFE, 0xDB, 0x00)
+TRIA_GREEN_RGBH = (0x22, 0xB1, 0x4C)
 
 # WARN: These commands will be processed by application. Tags like <TAG> are likely placeholder
 

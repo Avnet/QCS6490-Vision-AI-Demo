@@ -19,13 +19,14 @@ from .common import (
     GPU_UTIL_KEY,
     MEM_THERMAL_KEY,
     MEM_UTIL_KEY,
+    DSP_UTIL_KEY,
     OBJECT_DETECTION,
     POSE_DETECTION,
     SEGMENTATION,
     HW_SAMPLING_PERIOD_ms,
 )
 from .gst_thread import GstPipeline
-from .psutil_profile import get_cpu_gpu_mem_temps
+from .temp_profile import get_cpu_gpu_mem_temps
 
 # Locks app version, prevents warnings
 gi.require_version("Gtk", "3.0")
@@ -80,6 +81,7 @@ class Handler:
             CPU_UTIL_KEY: 0,
             MEM_UTIL_KEY: 0,
             GPU_UTIL_KEY: 0,
+            DSP_UTIL_KEY: 0,
             CPU_THERMAL_KEY: 0,
             MEM_THERMAL_KEY: 0,
             GPU_THERMAL_KEY: 0,
@@ -165,14 +167,16 @@ class Handler:
         return True
 
     def update_loads(self):
-        cpu_util, gpu_util, mem_util = (
+        cpu_util, gpu_util, mem_util, dsp_util = (
             self.QProf.get_cpu_usage_pct(),
             self.QProf.get_gpu_usage_pct(),
             self.QProf.get_memory_usage_pct(),
+            self.QProf.get_dsp_usage_pct(),
         )
         self.sample_data[CPU_UTIL_KEY] = cpu_util
         self.sample_data[GPU_UTIL_KEY] = gpu_util
         self.sample_data[MEM_UTIL_KEY] = mem_util
+        self.sample_data[DSP_UTIL_KEY] = dsp_util
         GLib.idle_add(
             self.IdleUpdateLabels,
             self.CPU_load,
@@ -188,6 +192,11 @@ class Handler:
             self.MEM_load,
             "{:.2f}".format(mem_util, 2),
         )
+        GLib.idle_add(
+            self.IdleUpdateLabels,
+            self.DSP_load,
+            "{:.2f}".format(dsp_util, 2),
+        )
         return True
 
     def update_sample_data(self):
@@ -199,6 +208,9 @@ class Handler:
     def open_about(self, *args):
         self.aboutWindow.set_transient_for(self.MainWindow)
         self.aboutWindow.run()
+    
+    def on_mainWindow_show(self, *args):
+        return
 
     def on_mainWindow_destroy(self, *args):
         if self.QProf is not None:

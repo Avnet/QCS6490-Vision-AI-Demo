@@ -12,7 +12,7 @@ from vai.common import (APP_HEADER, CPU_THERMAL_KEY, CPU_UTIL_KEY,
                         MEM_THERMAL_KEY, MEM_UTIL_KEY, TIME_KEY, TRIA,
                         TRIA_BLUE_RGBH, TRIA_PINK_RGBH, TRIA_YELLOW_RGBH,
                         AUTOMATIC_DEMO_SWITCH_s, GRAPH_SAMPLE_WINDOW_SIZE_s,
-                        get_ema)
+                        DSP_UTIL_KEY, TRIA_GREEN_RGBH, get_ema)
 from vai.graphing import (draw_axes_and_labels,
                           draw_graph_background_and_border, draw_graph_data)
 from vai.handler import Handler
@@ -39,6 +39,7 @@ UTIL_GRAPH_COLORS_RGBF = {
     CPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_PINK_RGBH),
     MEM_UTIL_KEY: tuple(c / 255.0 for c in TRIA_BLUE_RGBH),
     GPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_YELLOW_RGBH),
+    DSP_UTIL_KEY: tuple(c / 255.0 for c in TRIA_GREEN_RGBH),
 }
 
 THERMAL_GRAPH_COLORS_RGBF = {
@@ -51,6 +52,7 @@ UTIL_GRAPH_COLORS_RGBF = {
     CPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_PINK_RGBH),
     MEM_UTIL_KEY: tuple(c / 255.0 for c in TRIA_BLUE_RGBH),
     GPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_YELLOW_RGBH),
+    DSP_UTIL_KEY: tuple(c / 255.0 for c in TRIA_GREEN_RGBH),
 }
 
 THERMAL_GRAPH_COLORS_RGBF = {
@@ -103,14 +105,24 @@ class VaiDemoManager:
         self.localAppThread.start()
 
     def resize_graphs_dynamically(self, parent_widget, _allocation):
+        if not self.eventHandler.GraphDrawAreaTop or not self.eventHandler.GraphDrawAreaBottom:
+            return
+        
         """Resize graphing areas to be uniform and fill remaining space. To be called on size-allocate signal."""
 
         # Total width will be a function of the current lifecycle of the widget, it may have a surprising value
         total_width = parent_widget.get_allocated_width()
         total_height = parent_widget.get_allocated_height()
+
+        BottomBox = GladeBuilder.get_object("BottomBox")
+
         self.main_window_dims = (total_width, total_height)
         if total_width == 0:
             return
+
+        BottomBox_width = BottomBox.get_allocated_width()
+        if BottomBox_width == 0:
+            return        
 
         # These datagrid widths are what determine the remaining space
         data_grid = GladeBuilder.get_object("DataGrid")
@@ -118,7 +130,7 @@ class VaiDemoManager:
         if not data_grid or not data_grid1:
             return
 
-        remaining_graph_width = total_width - (
+        remaining_graph_width = BottomBox_width - (
             data_grid.get_allocated_width() + data_grid1.get_allocated_width()
         )
         # Account for margins that arent included in the allocated width
@@ -132,6 +144,18 @@ class VaiDemoManager:
         half = remaining_graph_width // 2
         if half < 0:
             return
+
+        video_sink = GladeBuilder.get_object("DrawArea1")
+
+        try:
+            window_x, window_y = video_sink.translate_coordinates(video_sink.get_toplevel(), 0, 0)
+
+            camera_bottom_position = window_y + video_sink.get_allocated_height()
+
+            if camera_bottom_position > 148:
+                BottomBox.set_size_request(-1, round(total_height - camera_bottom_position))
+        except:
+            pass
 
         graph_top = self.eventHandler.GraphDrawAreaTop
         graph_bottom = self.eventHandler.GraphDrawAreaBottom
@@ -150,6 +174,7 @@ class VaiDemoManager:
             CPU_UTIL_KEY: collections.deque([], maxlen=sample_size),
             MEM_UTIL_KEY: collections.deque([], maxlen=sample_size),
             GPU_UTIL_KEY: collections.deque([], maxlen=sample_size),
+            DSP_UTIL_KEY: collections.deque([], maxlen=sample_size),
         }
         self.thermal_data = {
             TIME_KEY: collections.deque([], maxlen=sample_size),
@@ -170,18 +195,22 @@ class VaiDemoManager:
         cur_cpu = self.eventHandler.sample_data[CPU_UTIL_KEY]
         cur_gpu = self.eventHandler.sample_data[GPU_UTIL_KEY]
         cur_mem = self.eventHandler.sample_data[MEM_UTIL_KEY]
+        cur_dsp = self.eventHandler.sample_data[DSP_UTIL_KEY]
 
         last_cpu = self.util_data[CPU_UTIL_KEY][-1] if self.util_data[CPU_UTIL_KEY] else cur_cpu
         last_gpu = self.util_data[GPU_UTIL_KEY][-1] if self.util_data[GPU_UTIL_KEY] else cur_gpu
         last_mem = self.util_data[MEM_UTIL_KEY][-1] if self.util_data[MEM_UTIL_KEY] else cur_mem
+        last_dsp = self.util_data[DSP_UTIL_KEY][-1] if self.util_data[DSP_UTIL_KEY] else cur_dsp
 
         ema_cpu = get_ema(cur_cpu, last_cpu)
         ema_gpu = get_ema(cur_gpu, last_gpu)
         ema_mem = get_ema(cur_mem, last_mem)
+        ema_dsp = get_ema(cur_dsp, last_dsp)
 
         self.util_data[CPU_UTIL_KEY].append(ema_cpu)
         self.util_data[GPU_UTIL_KEY].append(ema_gpu)
         self.util_data[MEM_UTIL_KEY].append(ema_mem)
+        self.util_data[DSP_UTIL_KEY].append(ema_dsp)
 
         cur_time = time.monotonic()
         while (
@@ -192,11 +221,18 @@ class VaiDemoManager:
             self.util_data[CPU_UTIL_KEY].popleft()
             self.util_data[GPU_UTIL_KEY].popleft()
             self.util_data[MEM_UTIL_KEY].popleft()
-
+            self.util_data[DSP_UTIL_KEY].popleft()
 
 
 
     def on_util_graph_draw(self, widget, cr):
+        if not self.eventHandler.GraphDrawAreaTop:
+            return True
+
+        if not self.util_data:
+            self.eventHandler.GraphDrawAreaTop.queue_draw()
+            return True
+        
         """Draw the util graph on the draw area"""
 
         self._sample_util_data()
@@ -398,6 +434,7 @@ class VaiDemoManager:
         self.eventHandler.FPSRate1 = GladeBuilder.get_object("FPS_rate_1")
         self.eventHandler.CPU_load = GladeBuilder.get_object("CPU_load")
         self.eventHandler.GPU_load = GladeBuilder.get_object("GPU_load")
+        self.eventHandler.DSP_load = GladeBuilder.get_object("DSP_load")
         self.eventHandler.MEM_load = GladeBuilder.get_object("MEM_load")
         self.eventHandler.CPU_temp = GladeBuilder.get_object("CPU_temp")
         self.eventHandler.GPU_temp = GladeBuilder.get_object("GPU_temp")
