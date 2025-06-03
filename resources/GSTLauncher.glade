@@ -367,7 +367,7 @@
                 <property name="can_focus">False</property>
                 <property name="valign">center</property>
                 <property name="margin_left">15</property>
-                <property name="margin_bottom">15</property>
+                <property name="margin_bottom">0</property>
                 <property name="pixbuf">VisionAI-Kit_6490_100.png</property>
               </object>
               <packing>
@@ -378,12 +378,12 @@
             </child>
             <child type="center">
               <object class="GtkBox">
-                <property name="width_request">2000</property>
+                <property name="width_request">500</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">center</property>
                 <property name="valign">center</property>
-                <property name="margin_top">20</property>
+                <property name="margin_top">5</property>
                 <property name="spacing">3</property>
                 <property name="baseline_position">top</property>
                 <child>
@@ -405,8 +405,8 @@
                 </child>
                 <child>
                   <object class="GtkComboBox" id="demo_selection0">
-                    <property name="width_request">500</property>
-                    <property name="height_request">40</property>
+                    <property name="width_request">100</property>
+                    <property name="height_request">20</property>
                     <property name="visible">True</property>
                     <property name="app_paintable">True</property>
                     <property name="can_focus">False</property>
@@ -465,8 +465,8 @@
                 </child>
                 <child>
                   <object class="GtkComboBox" id="demo_selection1">
-                    <property name="width_request">500</property>
-                    <property name="height_request">40</property>
+                    <property name="width_request">100</property>
+                    <property name="height_request">20</property>
                     <property name="visible">True</property>
                     <property name="app_paintable">True</property>
                     <property name="can_focus">False</property>
@@ -508,7 +508,7 @@
                 <child>
                   <object class="GtkButton">
                     <property name="label">Info</property>
-                    <property name="width_request">150</property>
+                    <property name="width_request">50</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -542,7 +542,7 @@
                 <child>
                   <object class="GtkButton">
                     <property name="label">Exit</property>
-                    <property name="width_request">150</property>
+                    <property name="width_request">50</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -577,9 +577,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="valign">start</property>
+                <property name="valign">center</property>
                 <property name="margin_right">15</property>
-                <property name="margin_bottom">15</property>
+                <property name="margin_bottom">0</property>
                 <property name="pixbuf">TRIA-Color-RGB-100.png</property>
               </object>
               <packing>
@@ -671,7 +671,7 @@
         </child>
         <child>
           <object class="GtkGrid" id="BottomBox">
-            <property name="height_request">568</property>
+            <property name="height_request">148</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="valign">end</property>
@@ -716,7 +716,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -733,7 +733,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -749,7 +749,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -765,7 +765,23 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">DSP Usage</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
                   </packing>
                 </child>
                 <child>
@@ -782,7 +798,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -800,7 +816,25 @@
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="DSP_load">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">0</property>
+                    <property name="single_line_mode">True</property>
+                    <style>
+                      <class name="label_l_m"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
                   </packing>
                 </child>
                 <child>
@@ -811,7 +845,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
                 <child>
@@ -822,7 +856,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -833,7 +867,18 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">legend_green.png</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
                   </packing>
                 </child>
                 <child>
@@ -882,6 +927,22 @@
                   <packing>
                     <property name="left_attach">3</property>
                     <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">%</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
               </object>

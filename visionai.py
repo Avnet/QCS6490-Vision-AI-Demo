@@ -398,6 +398,7 @@ class VaiDemoManager:
         self.eventHandler.FPSRate1 = GladeBuilder.get_object("FPS_rate_1")
         self.eventHandler.CPU_load = GladeBuilder.get_object("CPU_load")
         self.eventHandler.GPU_load = GladeBuilder.get_object("GPU_load")
+        self.eventHandler.DSP_load = GladeBuilder.get_object("DSP_load")
         self.eventHandler.MEM_load = GladeBuilder.get_object("MEM_load")
         self.eventHandler.CPU_temp = GladeBuilder.get_object("CPU_temp")
         self.eventHandler.GPU_temp = GladeBuilder.get_object("GPU_temp")
@@ -452,7 +453,7 @@ class VaiDemoManager:
 
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-cursor-theme-name","Yaru")
-        settings.set_property("gtk-cursor-theme-size", 64)
+        settings.set_property("gtk-cursor-theme-size", 32)
 
         Gtk.main()
 

@@ -17,6 +17,7 @@ class QProfProcess(threading.Thread):
         self.CPU = 0
         self.GPU = 0
         self.MEM = 0
+        self.DSP = 0
         threading.Thread.__init__(self)
 
     def run(self):
@@ -32,12 +33,12 @@ class QProfProcess(threading.Thread):
                                         --profile \
                                         --profile-type async \
                                         --result-format CSV \
-                                        --capabilities-list profiler:apps-proc-cpu-metrics profiler:proc-gpu-specific-metrics profiler:apps-proc-mem-metrics \
+                                        --capabilities-list profiler:apps-proc-cpu-metrics profiler:proc-gpu-specific-metrics profiler:apps-proc-mem-metrics profiler:cdsp-dsp-metrics \
                                         --profile-time 10 \
                                         --sampling-rate {HW_SAMPLING_PERIOD_ms} \
                                         --streaming-rate {HW_SAMPLING_PERIOD_ms} \
                                         --live \
-                                        --metric-id-list 4648 4616 4865".split(),
+                                        --metric-id-list 4648 4616 4865 4098".split(),
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -64,7 +65,10 @@ class QProfProcess(threading.Thread):
                 elif line.find(b"Memory Usage %:") > -1:
                     result = re.search(b"Memory Usage %:(.*)%", line)
                     self.MEM = float(result.group(1))
-
+                elif line.find(b"QDSP6 Utilization:") > -1:
+                    result = re.search(b"QDSP6 Utilization:(.*) Percentage", line)
+                    self.DSP = float(result.group(1))
+                    
             # cleanup output files
             subprocess.call(
                 "/bin/rm -rf /data/shared/QualcommProfiler/profilingresults/*",
@@ -83,3 +87,6 @@ class QProfProcess(threading.Thread):
 
     def get_memory_usage_pct(self):
         return round(self.MEM, 2)
+    
+    def get_dsp_usage_pct(self):
+        return round(self.DSP, 2)

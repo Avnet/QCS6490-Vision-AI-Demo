@@ -1,8 +1,8 @@
 from .common import inverse_lerp, lerp
 
 # Scaling boundaries (assumes res between 1920x1080 and 3840x2160)
-GRAPH_LABEL_FONT_SIZE_MIN = 14
-GRAPH_LABEL_FONT_SIZE_MAX = 34
+GRAPH_LABEL_FONT_SIZE_MIN = 10
+GRAPH_LABEL_FONT_SIZE_MAX = 14
 
 GRAPH_AXIS_LINE_WIDTH_MIN = 2
 GRAPH_AXIS_LINE_WIDTH_MAX = 4

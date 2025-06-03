@@ -3,6 +3,9 @@
 **Powered by Qualcomm Hexagon AI Engine**  
 **License: MIT**
 
+**Branch features:**
+**Support for 1080p displays - Support for QLI.1.5 - DSP utilization visualization**
+
 ![vai_sample1_wave_edited](https://github.com/user-attachments/assets/8f4f451c-39e9-40a5-98fb-a428ed6d7152)
 
 ## Overview

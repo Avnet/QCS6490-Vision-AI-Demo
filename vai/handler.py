@@ -19,6 +19,7 @@ from .common import (
     GPU_UTIL_KEY,
     MEM_THERMAL_KEY,
     MEM_UTIL_KEY,
+    DSP_UTIL_KEY,
     OBJECT_DETECTION,
     POSE_DETECTION,
     SEGMENTATION,
@@ -80,6 +81,7 @@ class Handler:
             CPU_UTIL_KEY: 0,
             MEM_UTIL_KEY: 0,
             GPU_UTIL_KEY: 0,
+            DSP_UTIL_KEY: 0,
             CPU_THERMAL_KEY: 0,
             MEM_THERMAL_KEY: 0,
             GPU_THERMAL_KEY: 0,
@@ -165,14 +167,16 @@ class Handler:
         return True
 
     def update_loads(self):
-        cpu_util, gpu_util, mem_util = (
+        cpu_util, gpu_util, mem_util, dsp_util = (
             self.QProf.get_cpu_usage_pct(),
             self.QProf.get_gpu_usage_pct(),
             self.QProf.get_memory_usage_pct(),
+            self.QProf.get_dsp_usage_pct(),
         )
         self.sample_data[CPU_UTIL_KEY] = cpu_util
         self.sample_data[GPU_UTIL_KEY] = gpu_util
         self.sample_data[MEM_UTIL_KEY] = mem_util
+        self.sample_data[DSP_UTIL_KEY] = dsp_util
         GLib.idle_add(
             self.IdleUpdateLabels,
             self.CPU_load,
@@ -187,6 +191,11 @@ class Handler:
             self.IdleUpdateLabels,
             self.MEM_load,
             "{:.2f}".format(mem_util, 2),
+        )
+        GLib.idle_add(
+            self.IdleUpdateLabels,
+            self.DSP_load,
+            "{:.2f}".format(dsp_util, 2),
         )
         return True
 
