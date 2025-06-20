@@ -36,20 +36,25 @@ CAMERA = f"<DATA_SRC> ! qtivtransform ! video/x-raw,format=BGRA,width=640,height
 POSE_DETECTION = "<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
 tee name=split \
 split. ! queue ! qtivcomposer name=mixer ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options=\"QNNExternalDelegate,backend_type=htp;\" \
-model=/opt/posenet_mobilenet_v1.tflite ! qtimlvpose threshold=51.0 results=2 module=posenet labels=/opt/posenet_mobilenet_v1.labels \
-constants=\"Posenet,q-offsets=<128.0,128.0,117.0>,q-scales=<0.0784313753247261,0.0784313753247261,1.3875764608383179>;\" ! video/x-raw,format=BGRA,width=640,height=480 ! mixer."
+split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so \
+external-delegate-options=\"QNNExternalDelegate,backend_type=htp;\" model=/etc/models/hrnet_pose_quantized.tflite ! queue ! \
+qtimlvpose threshold=51.0 results=2 module=hrnet labels=/etc/labels/hrnet_pose.labels \
+constants=\"hrnet,q-offsets=<8.0>,q-scales=<0.0040499246679246426>;\" ! video/x-raw,format=BGRA,width=640,height=480 ! mixer."
 
 CLASSIFICATION = '<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
 tee name=split \
 split. ! queue ! qtivcomposer name=mixer sink_1::position="<30,30>" sink_1::dimensions="<320, 180>" ! queue ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! queue ! qtimlsnpe delegate=dsp model=/opt/inceptionv3.dlc ! queue ! qtimlvclassification threshold=40.0 results=2 \
-module=mobilenet labels=/opt/classification.labels ! video/x-raw,format=BGRA,width=640,height=360 ! queue ! mixer.'
+split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so \
+external-delegate-options="QNNExternalDelegate,backend_type=htp;" model=/etc/models/inception_v3_quantized.tflite ! queue ! \
+qtimlvclassification threshold=40.0 results=2 module=mobilenet labels=/etc/labels/classification.labels \
+constants="Inceptionv3,q-offsets=<38.0>,q-scales=<0.17039915919303894>;" ! video/x-raw,format=BGRA,width=640,height=360 ! queue ! mixer.'
 
 OBJECT_DETECTION = '<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
 tee name=split \
 split. ! queue ! qtivcomposer name=mixer1 ! queue ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! queue ! qtimlsnpe delegate=dsp model=/opt/yolonas.dlc layers="</heads/Mul, /heads/Sigmoid>" ! queue ! qtimlvdetection threshold=51.0 results=10 module=yolo-nas labels=/opt/yolonas.labels \
+split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options="QNNExternalDelegate,backend_type=htp;" \
+model=/etc/models/yolox_quantized.tflite ! queue ! qtimlvdetection threshold=75.0 results=10 module=yolov8 labels=/etc/labels/yolox.labels \
+constants="YoloV8,q-offsets=<51.0,0.0,0.0>,q-scales=<3.9152722358703613,0.0037870765663683414,1.0>;" \
 ! video/x-raw,format=BGRA,width=640,height=480 ! queue ! mixer1.'
 
 DEPTH_SEGMENTATION = "<DATA_SRC> ! qtivtransform ! \
@@ -63,8 +68,8 @@ DEPTH_SEGMENTATION = "<DATA_SRC> ! qtivtransform ! \
         qtimltflite delegate=external \
             external-delegate-path=libQnnTFLiteDelegate.so \
             external-delegate-options=QNNExternalDelegate,backend_type=htp \
-            model=/opt/Midas-V2-Quantized.tflite ! queue ! \
-        qtimlvsegmentation module=midas-v2 labels=/opt/monodepth.labels \
+            model=/etc/models/midas_quantized.tflite ! queue ! \
+        qtimlvsegmentation module=midas-v2 labels=/etc/labels/monodepth.labels \
             constants=\"Midas,q-offsets=<0.0>,q-scales=<4.716535568237305>;\" ! \
         video/x-raw,width=960,height=720 ! queue ! dual.sink_1"
 
@@ -76,11 +81,11 @@ split. ! queue ! \
       delegate=external \
       external-delegate-path=libQnnTFLiteDelegate.so \
       external-delegate-options="QNNExternalDelegate,backend_type=htp" \
-      model=/opt/deeplabv3_plus_mobilenet_quantized.tflite ! queue ! \
+      model=/etc/models/deeplabv3_plus_mobilenet_quantized.tflite ! queue ! \
   qtimlvsegmentation \
       module=deeplab-argmax \
-      labels=/opt/voc_labels.txt \
-      constants="deeplab,q-offsets=<0.0>,q-scales=<1.0>" ! \
+      labels=/etc/labels/deeplabv3_resnet50.labels \
+      constants="deeplab,q-offsets=<0.0>,q-scales=<1.0>;" ! \
   video/x-raw,format=BGRA,width=640,height=480 ! \
   queue ! mixer.'
 
