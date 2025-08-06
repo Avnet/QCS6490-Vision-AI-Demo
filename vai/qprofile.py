@@ -17,6 +17,7 @@ class QProfProcess(threading.Thread):
         self.CPU = 0
         self.GPU = 0
         self.MEM = 0
+        self.DSP = 0
         threading.Thread.__init__(self)
 
     def run(self):
@@ -32,42 +33,54 @@ class QProfProcess(threading.Thread):
                                         --profile \
                                         --profile-type async \
                                         --result-format CSV \
-                                        --capabilities-list profiler:apps-proc-cpu-metrics profiler:proc-gpu-specific-metrics profiler:apps-proc-mem-metrics \
+                                        --capabilities-list profiler:apps-proc-cpu-metrics profiler:proc-gpu-specific-metrics profiler:apps-proc-mem-metrics profiler:cdsp-dsp-metrics \
                                         --profile-time 10 \
                                         --sampling-rate {HW_SAMPLING_PERIOD_ms} \
                                         --streaming-rate {HW_SAMPLING_PERIOD_ms} \
                                         --live \
-                                        --metric-id-list 4648 4616 4865".split(),
+                                        --metric-id-list 4648 4616 4865 4098".split(),
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
             except: 
+                p = None
                 self.enabled = False
                 pass
             
-            while self.enabled:
-                # line = p.stdout.readline().decode('utf-8').encode("ascii","ignore")
-                line = p.stdout.readline().decode("utf-8").encode("ascii", "ignore")
+            while self.enabled and p is not None:
+                if p.stdout is not None:
+                    line = p.stdout.readline().decode("utf-8").encode("ascii", "ignore")
+                    line = ansi_escape_8bit.sub(b"", line)
+                else:
+                    line = None
 
-                line = ansi_escape_8bit.sub(b"", line)
                 if not line:
                     break
                 # the real code does filtering here
-
-                if line.find(b"CPU Total Load:") > -1:
-                    result = re.search(b"CPU Total Load:(.*)%", line)
-                    self.CPU = float(result.group(1))
-                elif line.find(b"GPU Utilization:") > -1:
-                    result = re.search(b"GPU Utilization:(.*)%", line)
-                    self.GPU = float(result.group(1))
-                elif line.find(b"Memory Usage %:") > -1:
-                    result = re.search(b"Memory Usage %:(.*)%", line)
-                    self.MEM = float(result.group(1))
-
+                try:
+                    if line.find(b"CPU Total Load:") > -1:
+                        result = re.search(b"CPU Total Load:(.*)%", line)
+                        if result is not None:
+                            self.CPU = float(result.group(1))
+                    elif line.find(b"GPU Utilization:") > -1:
+                        result = re.search(b"GPU Utilization:(.*)%", line)
+                        if result is not None:
+                            self.GPU = float(result.group(1))
+                    elif line.find(b"Memory Usage %:") > -1:
+                        result = re.search(b"Memory Usage %:(.*)%", line)
+                        if result is not None:
+                            self.MEM = float(result.group(1))
+                    elif line.find(b"QDSP6 Utilization:") > -1:
+                        result = re.search(b"QDSP6 Utilization:(.*) Percentage", line)
+                        if result is not None:
+                            self.DSP = float(result.group(1))
+                except:
+                    pass
+                    
             # cleanup output files
             subprocess.call(
-                "/bin/rm -rf /data/shared/QualcommProfiler/profilingresults/*",
+                "/bin/rm -rf /var/QualcommProfiler/profilingresults/*",
                 shell=True,
             )
             time.sleep(HW_SAMPLING_PERIOD_ms/1000)
@@ -83,3 +96,6 @@ class QProfProcess(threading.Thread):
 
     def get_memory_usage_pct(self):
         return round(self.MEM, 2)
+    
+    def get_dsp_usage_pct(self):
+        return round(self.DSP, 2)
