@@ -83,6 +83,11 @@ class QProfProcess(threading.Thread):
                 "/bin/rm -rf /var/QualcommProfiler/profilingresults/*",
                 shell=True,
             )
+            
+            subprocess.call(
+                "/bin/rm -rf /data/shared/QualcommProfiler/profilingresults/*",
+                shell=True,
+            )
             time.sleep(HW_SAMPLING_PERIOD_ms/1000)
 
     def Close(self):
