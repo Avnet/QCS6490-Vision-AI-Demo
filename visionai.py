@@ -523,7 +523,7 @@ class VaiDemoManager:
         self.eventHandler.QProf.start()
 
         settings = Gtk.Settings.get_default()
-        settings.set_property("gtk-cursor-theme-name","Yaru")
+        settings.set_property("gtk-cursor-theme-name","Adwaita")
         settings.set_property("gtk-cursor-theme-size", 32)
 
         # --- Filter unwanted log messages from ML plugin ---
