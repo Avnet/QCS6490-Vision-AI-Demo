@@ -18,6 +18,7 @@ class QProfProcess(threading.Thread):
         self.GPU = 0
         self.MEM = 0
         self.DSP = 0
+        self.p = None
         threading.Thread.__init__(self)
 
     def run(self):
@@ -28,7 +29,7 @@ class QProfProcess(threading.Thread):
         )
         while self.enabled:
             try:
-                p = subprocess.Popen(
+                self.p = subprocess.Popen(
                     f"qprof \
                                         --profile \
                                         --profile-type async \
@@ -43,17 +44,19 @@ class QProfProcess(threading.Thread):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
-            except: 
-                p = None
+            except FileNotFoundError:
+                print("Error: 'qprof' command not found. Is it installed and in your PATH?")
                 self.enabled = False
-                pass
+                continue
+            except Exception as e:
+                print(f"Error starting qprof: {e}")
+                self.enabled = False
+                continue
             
-            while self.enabled and p is not None:
-                if p.stdout is not None:
-                    line = p.stdout.readline().decode("utf-8").encode("ascii", "ignore")
-                    line = ansi_escape_8bit.sub(b"", line)
-                else:
-                    line = None
+            while self.enabled and self.p and self.p.poll() is None:
+                line = self.p.stdout.readline()
+                line = line.decode("utf-8", "ignore").encode("ascii", "ignore")
+                line = ansi_escape_8bit.sub(b"", line)
 
                 if not line:
                     break
@@ -83,7 +86,6 @@ class QProfProcess(threading.Thread):
                 "/bin/rm -rf /var/QualcommProfiler/profilingresults/*",
                 shell=True,
             )
-            
             subprocess.call(
                 "/bin/rm -rf /data/shared/QualcommProfiler/profilingresults/*",
                 shell=True,
@@ -92,6 +94,14 @@ class QProfProcess(threading.Thread):
 
     def Close(self):
         self.enabled = False
+        if hasattr(self, 'p') and self.p and self.p.poll() is None:
+            print("Terminating QProf subprocess...")
+            try:
+                self.p.terminate()
+                self.p.wait(timeout=1)
+            except (ProcessLookupError, subprocess.TimeoutExpired, AttributeError):
+                pass # Already gone or couldn't be killed.
+
 
     def get_cpu_usage_pct(self):
         return round(self.CPU, 2)

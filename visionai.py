@@ -2,51 +2,65 @@
 
 import collections
 import os
+import sys
 import threading
 import time
-
 import gi
 
 from vai.common import (APP_HEADER, CPU_THERMAL_KEY, CPU_UTIL_KEY,
                         GPU_THERMAL_KEY, GPU_UTIL_KEY, GRAPH_SAMPLE_SIZE,
-                        MEM_THERMAL_KEY, MEM_UTIL_KEY, TIME_KEY, TRIA,
-                        TRIA_BLUE_RGBH, TRIA_PINK_RGBH, TRIA_YELLOW_RGBH,
-                        AUTOMATIC_DEMO_SWITCH_s, GRAPH_SAMPLE_WINDOW_SIZE_s,
-                        DSP_UTIL_KEY, TRIA_GREEN_RGBH, get_ema)
+                        MEM_THERMAL_KEY, MEM_UTIL_KEY, DSP_UTIL_KEY, TIME_KEY, 
+                        TRIA, TRIA_BLUE_RGBH, TRIA_PINK_RGBH, TRIA_YELLOW_RGBH, 
+                        TRIA_GREEN_RGBH, GRAPH_SAMPLE_WINDOW_SIZE_s,
+                        get_ema)
 from vai.graphing import (draw_axes_and_labels,
                           draw_graph_background_and_border, draw_graph_data)
 from vai.handler import Handler
 from vai.qprofile import QProfProcess
 
-# os.environ["XDG_RUNTIME_DIR"] = "/dev/socket/weston"
-# os.environ["WAYLAND_DISPLAY"] = "wayland-1"
-# os.environ["GDK_BACKEND"] = "wayland"
-# os.environ["LC_ALL"] = "en.utf-8"
+class FdFilter:
+    """
+    Redirects low-level file descriptors (stdout, stderr) to a pipe,
+    filters the output in a separate thread, and writes the filtered
+    output back to the original destination. This is necessary to
+    suppress messages from C libraries that write directly to file
+    descriptors, bypassing sys.stdout/sys.stderr.
+    """
+    def __init__(self, filter_strings):
+        self.filter_strings = [s.lower() for s in filter_strings]
+        self.original_stdout_fd = os.dup(1)
+        self.original_stderr_fd = os.dup(2)
 
-# os.environ["QMONITOR_BACKEND_LIB_PATH"] = "/var/QualcommProfiler/libs/backends/"
-# os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/var/QualcommProfiler/libs/"
-# os.environ["PATH"] = "$PATH:/data/shared/QualcommProfiler/bins"
+        # Create pipes to intercept stdout and stderr
+        self.stdout_pipe_r, self.stdout_pipe_w = os.pipe()
+        self.stderr_pipe_r, self.stderr_pipe_w = os.pipe()
+
+        # Redirect stdout and stderr to the write-ends of the pipes
+        os.dup2(self.stdout_pipe_w, 1)
+        os.dup2(self.stderr_pipe_w, 2)
+
+        # Create threads to read from the pipes, filter, and write to original FDs
+        self.stdout_thread = threading.Thread(target=self._pipe_reader, args=(self.stdout_pipe_r, self.original_stdout_fd))
+        self.stderr_thread = threading.Thread(target=self._pipe_reader, args=(self.stderr_pipe_r, self.original_stderr_fd))
+        self.stdout_thread.daemon = True
+        self.stderr_thread.daemon = True
+        self.stdout_thread.start()
+        self.stderr_thread.start()
+
+    def _pipe_reader(self, pipe_r_fd, original_dest_fd):
+        """Reads from a pipe, filters, and writes to the destination."""
+        with os.fdopen(pipe_r_fd, 'r') as pipe_file:
+            for line in iter(pipe_file.readline, ''):
+                if not any(f in line.lower() for f in self.filter_strings):
+                    os.write(original_dest_fd, line.encode('utf-8'))
 
 # Locks app version, prevents warnings
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gst", "1.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GLib, Gst, Gtk
+from gi.repository import Gdk, Gst, Gtk
 
 # --- Graphing constants ---
-
-UTIL_GRAPH_COLORS_RGBF = {
-    CPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_PINK_RGBH),
-    MEM_UTIL_KEY: tuple(c / 255.0 for c in TRIA_BLUE_RGBH),
-    GPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_YELLOW_RGBH),
-    DSP_UTIL_KEY: tuple(c / 255.0 for c in TRIA_GREEN_RGBH),
-}
-
-THERMAL_GRAPH_COLORS_RGBF = {
-    CPU_THERMAL_KEY: tuple(c / 255.0 for c in TRIA_PINK_RGBH),
-    MEM_THERMAL_KEY: tuple(c / 255.0 for c in TRIA_BLUE_RGBH),
-    GPU_THERMAL_KEY: tuple(c / 255.0 for c in TRIA_YELLOW_RGBH),
-}
 
 UTIL_GRAPH_COLORS_RGBF = {
     CPU_UTIL_KEY: tuple(c / 255.0 for c in TRIA_PINK_RGBH),
@@ -69,10 +83,79 @@ MIN_UTIL_DISPLAYED = 0
 MAX_UTIL_DISPLAYED = 100
 
 # --- End Graphing constants ---
+def is_monitor_above_2k():
+    """
+    Checks if any connected monitor has a native resolution greater than 2K (2560x1440).
+    Uses EDID data from /sys/class/drm/ to determine resolution.
+    
+    Returns:
+        bool: True if any monitor has resolution > 2560x1440, False otherwise.
+    """
+    drm_path = '/sys/class/drm/'
+    above_2k = False
+
+    try:
+        for device in os.listdir(drm_path):
+            # Look for connected display devices (e.g., card0-HDMI-A-1, card0-eDP-1)
+            if not device.startswith('card'):
+                continue
+
+            status_file = os.path.join(drm_path, device, 'status')
+            edid_file = os.path.join(drm_path, device, 'edid')
+
+            # Only check if the monitor is connected
+            if os.path.exists(status_file) and os.path.exists(edid_file):
+                with open(status_file, 'r') as f:
+                    if f.read().strip() != 'connected':
+                        continue
+
+                # Read EDID data
+                with open(edid_file, 'rb') as f:
+                    edid_data = f.read()
+
+                if len(edid_data) < 128:
+                    continue  # Invalid EDID
+
+                # Parse EDID to get the native resolution
+                # Detailed Timing Descriptor 1 starts at 54th byte
+                dtd_start = 54
+                if dtd_start + 18 <= len(edid_data):
+                    # First DTD (usually the preferred/native mode)
+                    dtd = edid_data[dtd_start:dtd_start+18]
+
+                    # Parse horizontal active pixels (bytes 2-3)
+                    h_active_lo = dtd[2]
+                    h_active_hi = (dtd[4] & 0xF0) >> 4
+                    width = h_active_lo + (h_active_hi << 8)
+
+                    # Parse vertical active lines (bytes 5-6)
+                    v_active_lo = dtd[5]
+                    v_active_hi = (dtd[7] & 0xF0) >> 4
+                    height = v_active_lo + (v_active_hi << 8)
+
+                    # Check if resolution is greater than 2K (2560x1440)
+                    if width > 2560 or height > 1440:
+                        # Confirm it's a valid resolution
+                        if width >= 3840 or height >= 2160:
+                            above_2k = True
+                            break  # Found a 4K or higher display
+
+    except Exception as e:
+        print(f"Error reading EDID: {e}")
+        return False
+
+    return above_2k
 
 GladeBuilder = Gtk.Builder()
 APP_FOLDER = os.path.dirname(__file__)
-RESOURCE_FOLDER = os.path.join(APP_FOLDER, "resources")
+
+if is_monitor_above_2k():
+    print("Connected monitor resolution is above 2K (e.g., 4K).")
+    RESOURCE_FOLDER = os.path.join(APP_FOLDER, "resources_high")
+else:
+    print("No monitor above 2K resolution detected.")
+    RESOURCE_FOLDER = os.path.join(APP_FOLDER, "resources_low")
+
 LAYOUT_PATH = os.path.join(RESOURCE_FOLDER, "GSTLauncher.glade")
 
 def get_min_time_delta_smoothed(time_series: list):
@@ -89,20 +172,12 @@ def get_min_time_delta_smoothed(time_series: list):
 
 class VaiDemoManager:
     def __init__(self, port=7001):
-        Gst.init(None)
-
         self.eventHandler = Handler()
         self.running = True
-        self.demoSelection0Cnt = 0
-        self.demoSelection1Cnt = 0
         self.demo0Interval = 0
         self.demo1Interval = 0
         self.demo0RunningIndex = 0
         self.demo1RunningIndex = 0
-
-        GLib.timeout_add(1000, self.automateDemo)
-        self.localAppThread = threading.Thread(target=self.localApp)
-        self.localAppThread.start()
 
     def resize_graphs_dynamically(self, parent_widget, _allocation):
         if not self.eventHandler.GraphDrawAreaTop or not self.eventHandler.GraphDrawAreaBottom:
@@ -114,10 +189,12 @@ class VaiDemoManager:
         total_width = parent_widget.get_allocated_width()
         total_height = parent_widget.get_allocated_height()
 
-        BottomBox = GladeBuilder.get_object("BottomBox")
-
         self.main_window_dims = (total_width, total_height)
         if total_width == 0:
+            return
+
+        BottomBox = GladeBuilder.get_object("BottomBox")
+        if not BottomBox:
             return
 
         BottomBox_width = BottomBox.get_allocated_width()
@@ -145,12 +222,10 @@ class VaiDemoManager:
         if half < 0:
             return
 
-        video_sink = GladeBuilder.get_object("DrawArea1")
-
         try:
-            window_x, window_y = video_sink.translate_coordinates(video_sink.get_toplevel(), 0, 0)
+            window_x, window_y = self.eventHandler.DrawArea1.translate_coordinates(self.eventHandler.DrawArea1.get_toplevel(), 0, 0)
 
-            camera_bottom_position = window_y + video_sink.get_allocated_height()
+            camera_bottom_position = window_y + self.eventHandler.DrawArea1.get_allocated_height()
 
             if camera_bottom_position > 148:
                 BottomBox.set_size_request(-1, round(total_height - camera_bottom_position))
@@ -222,8 +297,6 @@ class VaiDemoManager:
             self.util_data[GPU_UTIL_KEY].popleft()
             self.util_data[MEM_UTIL_KEY].popleft()
             self.util_data[DSP_UTIL_KEY].popleft()
-
-
 
     def on_util_graph_draw(self, widget, cr):
         if not self.eventHandler.GraphDrawAreaTop:
@@ -317,6 +390,13 @@ class VaiDemoManager:
             self.thermal_data[MEM_THERMAL_KEY].popleft()
 
     def on_thermal_graph_draw(self, widget, cr):
+        if not self.eventHandler.GraphDrawAreaBottom:
+            return
+        
+        if not self.thermal_data:
+            self.eventHandler.GraphDrawAreaBottom.queue_draw()
+            return True    
+            
         """Draw the graph on the draw area"""
 
         self._sample_thermal_data()
@@ -357,63 +437,15 @@ class VaiDemoManager:
         self.eventHandler.GraphDrawAreaBottom.queue_draw()
         return True
 
-    def automateDemo(self):
-        if (self.eventHandler.CycleDemo0) and (self.demoSelection0Cnt > 0):
-            cycleDemo0 = True
-        else:
-            cycleDemo0 = False
-            self.demo0Interval = 0
-            self.demo0RunningIndex = 1
-
-        if (self.eventHandler.CycleDemo1) and (self.demoSelection1Cnt > 0):
-            cycleDemo1 = True
-        else:
-            cycleDemo1 = False
-            self.demo1Interval = 0
-            self.demo1RunningIndex = 1
-
-        if cycleDemo0:
-            if self.demo0Interval >= AUTOMATIC_DEMO_SWITCH_s:
-                self.demo0Interval = 0
-
-                #time automation in such a way that only one demo switches at a time
-                #to minimize potential issues
-                self.demo1Interval = int(AUTOMATIC_DEMO_SWITCH_s / 2)
-
-                self.demo0RunningIndex = self.demo0RunningIndex + 1
-
-                if self.demo0RunningIndex >= self.demoSelection0Cnt:
-                    self.demo0RunningIndex = 1
-                
-                if self.eventHandler.dualDemoRunning1 != True:
-                    self.eventHandler.demo_selection0.set_active(self.demo0RunningIndex) 
-                
-            else:
-                self.demo0Interval = self.demo0Interval + 1
-
-        if cycleDemo1:
-            if self.demo1Interval >= AUTOMATIC_DEMO_SWITCH_s:
-                self.demo1Interval = 0
-
-                #force demo 1 to run a different demo
-                if self.demo0RunningIndex >=0:
-                    self.demo1RunningIndex = self.demo0RunningIndex + 1
-                else:
-                    self.demo1RunningIndex = self.demo1RunningIndex + 1
-
-                if self.demo1RunningIndex >= self.demoSelection1Cnt:
-                    self.demo1RunningIndex = 1
-
-                if self.eventHandler.dualDemoRunning0 != True:
-                    self.eventHandler.demo_selection1.set_active(self.demo1RunningIndex) 
-            else:
-                self.demo1Interval = self.demo1Interval + 1
-
-        return GLib.SOURCE_CONTINUE
-
     def localApp(self):
         global GladeBuilder
 
+        # Initialize GStreamer. The log level is now controlled by the GST_DEBUG environment variable.
+        Gst.init(None)
+
+        self.init_graph_data()
+
+        """Build application window and connect signals"""
         GladeBuilder.add_from_file(LAYOUT_PATH)
         GladeBuilder.connect_signals(self.eventHandler)
 
@@ -425,7 +457,6 @@ class VaiDemoManager:
         )
 
         self.eventHandler.MainWindow = GladeBuilder.get_object("mainWindow")
-        self.eventHandler.MainWindow.connect("destroy", self.eventHandler.exit)
         self.eventHandler.MainWindow.connect(
             "size-allocate", self.resize_graphs_dynamically
         )
@@ -442,31 +473,34 @@ class VaiDemoManager:
         self.eventHandler.TopBox = GladeBuilder.get_object("TopBox")
         self.eventHandler.DataGrid = GladeBuilder.get_object("DataGrid")
         self.eventHandler.BottomBox = GladeBuilder.get_object("BottomBox")
-        self.eventHandler.DrawArea1 = GladeBuilder.get_object("DrawArea1")
-        self.eventHandler.DrawArea2 = GladeBuilder.get_object("DrawArea2")
+        self.eventHandler.DrawArea1 = GladeBuilder.get_object("videosink0")
+        self.eventHandler.DrawArea2 = GladeBuilder.get_object("videosink1")
+        self.eventHandler.set_video_sink(0, GladeBuilder.get_object("videosink0"))
+        self.eventHandler.set_video_sink(1, GladeBuilder.get_object("videosink1"))
         self.eventHandler.GraphDrawAreaTop = GladeBuilder.get_object("GraphDrawAreaTop")
         self.eventHandler.GraphDrawAreaBottom = GladeBuilder.get_object("GraphDrawAreaBottom")
         self.eventHandler.demo_selection0 = GladeBuilder.get_object("demo_selection0")
         self.eventHandler.demo_selection1 = GladeBuilder.get_object("demo_selection1")
+        self.eventHandler.dialogWindow = GladeBuilder.get_object("dialogWindow")
+        
+        """Disbale pipeline selection until cameras are found """
+        self.eventHandler.demo_selection0.set_sensitive(False)
+        self.eventHandler.demo_selection1.set_sensitive(False)
 
         model = self.eventHandler.demo_selection0.get_model()
         if model is not None:
-            self.demoSelection0Cnt = len(model)
+            self.eventHandler.demoSelection0Cnt = len(model)
 
         model = self.eventHandler.demo_selection1.get_model()
         if model is not None:
-            self.demoSelection1Cnt = len(model)
+            self.eventHandler.demoSelection1Cnt = len(model)
 
         # TODO: Dynamic sizing, positioning
         self.eventHandler.GraphDrawAreaTop.connect("draw", self.on_util_graph_draw)
-        self.eventHandler.GraphDrawAreaBottom.connect(
-            "draw", self.on_thermal_graph_draw
-        )
-        # Maybe keep canned generation for situations that perf depends arent available?
-        self.util_data = None
-        self.thermal_data = None
+        self.eventHandler.GraphDrawAreaBottom.connect("draw", self.on_thermal_graph_draw)
 
         self.eventHandler.QProf = QProfProcess()
+        self.eventHandler.QProf.daemon = True # Ensure thread doesn't block app exit
 
         # TODO: Can just put these in CSS
         self.eventHandler.MainWindow.override_background_color(
@@ -477,7 +511,7 @@ class VaiDemoManager:
         )
 
         self.eventHandler.BottomBox.override_background_color(
-            Gtk.StateType.NORMAL, Gdk.RGBA(23 / 255, 23 / 255, 23 / 255, 0.8)
+            Gtk.StateType.NORMAL, Gdk.RGBA(0 / 255, 23 / 255, 23 / 255, 1)
         )
 
         self.eventHandler.MainWindow.set_decorated(False)
@@ -485,14 +519,27 @@ class VaiDemoManager:
         self.eventHandler.MainWindow.maximize()
         self.eventHandler.MainWindow.show_all()
 
+
         self.eventHandler.QProf.start()
 
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-cursor-theme-name","Yaru")
-        settings.set_property("gtk-cursor-theme-size", 64)
+        settings.set_property("gtk-cursor-theme-size", 32)
+
+        # --- Filter unwanted log messages from ML plugin ---
+        # The QNN plugin prints log messages that can't be suppressed via
+        # environment variables, so we filter them from the low-level
+        # file descriptors directly.
+        filter_list = [
+            "<W> No usable logger handle was found",
+            "<W> Logs will be sent to the system's default channel",
+            "Could not find ncvt for conv cost",
+            "Could not find conv_ctrl for conv cost"
+        ]
+        self.log_filter = FdFilter(filter_list)
+        # --- End Filter ---
 
         Gtk.main()
-
 
 if __name__ == "__main__":
     print(TRIA)
@@ -500,3 +547,4 @@ if __name__ == "__main__":
     # Create the video object
     # Add port= if is necessary to use a different one
     video = VaiDemoManager()
+    video.localApp()

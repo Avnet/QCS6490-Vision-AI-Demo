@@ -313,6 +313,71 @@
     <property name="can_focus">False</property>
     <property name="pixbuf">exit.png</property>
   </object>
+  <object class="GtkDialog" id="dialogWindow">
+    <property name="name">dialogWindow</property>
+    <property name="width_request">480</property>
+    <property name="height_request">240</property>
+    <property name="can_focus">False</property>
+    <property name="type">popup</property>
+    <property name="resizable">False</property>
+    <property name="window_position">center-always</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="hide_titlebar_when_maximized">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="decorated">False</property>
+    <property name="gravity">center</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="dialogMessage">
+            <property name="name">dialogMessage</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="margin_left">10</property>
+            <property name="margin_right">10</property>
+            <property name="margin_top">50</property>
+            <property name="margin_bottom">50</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="label" translatable="yes">Scanning for cameras, please wait...</property>
+            <attributes>
+              <attribute name="font-desc" value="Sans Bold 24"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="liststore1">
     <columns>
       <!-- column-name Demo -->
@@ -345,6 +410,7 @@
   <object class="GtkWindow" id="mainWindow">
     <property name="can_focus">False</property>
     <signal name="destroy" handler="on_mainWindow_destroy" swapped="no"/>
+    <signal name="show" handler="on_mainWindow_show" swapped="no"/>
     <child type="titlebar">
       <placeholder/>
     </child>
@@ -367,7 +433,6 @@
                 <property name="can_focus">False</property>
                 <property name="valign">center</property>
                 <property name="margin_left">15</property>
-                <property name="margin_bottom">15</property>
                 <property name="pixbuf">VisionAI-Kit_6490_100.png</property>
               </object>
               <packing>
@@ -577,9 +642,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="valign">start</property>
+                <property name="valign">center</property>
                 <property name="margin_right">15</property>
-                <property name="margin_bottom">15</property>
                 <property name="pixbuf">TRIA-Color-RGB-100.png</property>
               </object>
               <packing>
@@ -609,7 +673,8 @@
                 <property name="row_homogeneous">True</property>
                 <property name="column_homogeneous">True</property>
                 <child>
-                  <object class="GtkAspectFrame">
+                  <object class="GtkAspectFrame" id="AspectFrame1">
+                    <property name="name">AspectFrame1</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="hexpand">True</property>
@@ -620,12 +685,22 @@
                     <property name="ratio">1.3300000429153442</property>
                     <property name="obey_child">False</property>
                     <child>
-                      <object class="GtkDrawingArea" id="DrawArea1">
-                        <property name="name">DrawArea1</property>
+                      <object class="GtkBox" id="videosink0">
+                        <property name="name">videosink0</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -635,7 +710,8 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkAspectFrame">
+                  <object class="GtkAspectFrame" id="AspectFrame2">
+                    <property name="name">AspectFrame2</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="hexpand">True</property>
@@ -646,12 +722,22 @@
                     <property name="ratio">1.3300000429153442</property>
                     <property name="obey_child">False</property>
                     <child>
-                      <object class="GtkDrawingArea" id="DrawArea2">
-                        <property name="name">DrawArea2</property>
+                      <object class="GtkBox" id="videosink1">
+                        <property name="name">videosink1</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -683,11 +769,282 @@
                 <property name="visible">True</property>
                 <property name="app_paintable">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">start</property>
+                <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="DataGrid">
+                <property name="width_request">0</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">start</property>
+                <property name="margin_left">2</property>
+                <property name="orientation">vertical</property>
+                <property name="row_spacing">2</property>
+                <property name="column_spacing">8</property>
+                <property name="row_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">CPU Usage, Avg</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="CPU_load">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">0</property>
+                    <property name="width_chars">7</property>
+                    <property name="max_width_chars">7</property>
+                    <style>
+                      <class name="label_l_m"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">LPDDR5 Usage</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">GPU Usage</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">DSP Usage</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="MEM_load">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">0</property>
+                    <property name="width_chars">7</property>
+                    <property name="max_width_chars">7</property>
+                    <style>
+                      <class name="label_l_m"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="GPU_load">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">0</property>
+                    <property name="width_chars">7</property>
+                    <property name="single_line_mode">True</property>
+                    <property name="max_width_chars">7</property>
+                    <style>
+                      <class name="label_l_m"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="DSP_load">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">0</property>
+                    <property name="width_chars">7</property>
+                    <property name="single_line_mode">True</property>
+                    <property name="max_width_chars">7</property>
+                    <style>
+                      <class name="label_l_m"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">legend_pink.png</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">legend_blue.png</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">legend_yellow.png</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">legend_green.png</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="margin_right">10</property>
+                    <property name="label" translatable="yes">%</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="margin_right">10</property>
+                    <property name="label" translatable="yes">%</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="margin_right">10</property>
+                    <property name="label" translatable="yes">%</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+                    <property name="margin_right">10</property>
+                    <property name="label" translatable="yes">%</property>
+                    <style>
+                      <class name="label_l"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">3</property>
                 <property name="top_attach">1</property>
               </packing>
             </child>
@@ -762,8 +1119,8 @@
                     <property name="valign">center</property>
                     <property name="hexpand">True</property>
                     <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="max_width_chars">6</property>
+                    <property name="width_chars">7</property>
+                    <property name="max_width_chars">7</property>
                     <style>
                       <class name="label_l_m"/>
                     </style>
@@ -797,8 +1154,8 @@
                     <property name="valign">center</property>
                     <property name="hexpand">True</property>
                     <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="max_width_chars">6</property>
+                    <property name="width_chars">7</property>
+                    <property name="max_width_chars">7</property>
                     <style>
                       <class name="label_l_m"/>
                     </style>
@@ -832,8 +1189,8 @@
                     <property name="valign">center</property>
                     <property name="hexpand">True</property>
                     <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="max_width_chars">6</property>
+                    <property name="width_chars">7</property>
+                    <property name="max_width_chars">7</property>
                     <style>
                       <class name="label_l_m"/>
                     </style>
@@ -905,7 +1262,7 @@
                 <property name="valign">center</property>
                 <property name="label" translatable="yes">System Thermals</property>
                 <style>
-                  <class name="label_l"/>
+                  <class name="label_l_t"/>
                 </style>
               </object>
               <packing>
@@ -921,7 +1278,7 @@
                 <property name="valign">center</property>
                 <property name="label" translatable="yes">System Utilization</property>
                 <style>
-                  <class name="label_l"/>
+                  <class name="label_l_t"/>
                 </style>
               </object>
               <packing>
@@ -935,7 +1292,7 @@
                 <property name="visible">True</property>
                 <property name="app_paintable">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">start</property>
+                <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
               </object>
               <packing>
@@ -958,275 +1315,6 @@
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
                 <property name="width">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid" id="DataGrid">
-                <property name="width_request">0</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">start</property>
-                <property name="margin_left">2</property>
-                <property name="margin_right">25</property>
-                <property name="orientation">vertical</property>
-                <property name="row_spacing">2</property>
-                <property name="column_spacing">8</property>
-                <property name="row_homogeneous">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">CPU Usage, Avg</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="CPU_load">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="max_width_chars">6</property>
-                    <style>
-                      <class name="label_l_m"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">LPDDR5 Usage</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">DSP Usage</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="MEM_load">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="max_width_chars">6</property>
-                    <style>
-                      <class name="label_l_m"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="pixbuf">legend_pink.png</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="pixbuf">legend_blue.png</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="pixbuf">legend_green.png</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">%</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">%</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">%</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="pixbuf">legend_yellow.png</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">GPU Usage</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="GPU_load">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="single_line_mode">True</property>
-                    <property name="max_width_chars">6</property>
-                    <style>
-                      <class name="label_l_m"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="DSP_load">
-                    <property name="name">DSP_load</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">0</property>
-                    <property name="width_chars">6</property>
-                    <property name="single_line_mode">True</property>
-                    <property name="max_width_chars">6</property>
-                    <style>
-                      <class name="label_l_m"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">2</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="label" translatable="yes">%</property>
-                    <style>
-                      <class name="label_l"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left_attach">3</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">3</property>
-                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>

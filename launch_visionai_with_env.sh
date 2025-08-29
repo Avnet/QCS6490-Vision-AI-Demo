@@ -1,7 +1,6 @@
 #!/bin/bash
 
 mount -o rw,remount /
-setenforce 0
 
 # Default to relative path, but allow override via environment variable. Helpful for dev vs prod env
 VISIONAI_PATH="${VISIONAI_PATH_OVERRIDE:-./visionai.py}"
