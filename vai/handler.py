@@ -1,15 +1,10 @@
 import pathlib
 import subprocess
-import sys
 import os
-from threading import Timer
-import shlex
-from time import sleep
 from vai.qprofile import QProfProcess
 import gi
 import threading
-import queue
-import gc
+from gi.repository import Gdk
 
 from .common import (
     APP_NAME,
@@ -301,8 +296,8 @@ class Handler:
         self.TopBox = None
         self.DataGrid = None
         self.BottomBox = None
-        self.frame0 = None
-        self.frame1 = None
+        self.DrawArea1 = None
+        self.DrawArea2 = None
         self.AspectFrame1 = None
         self.AspectFrame2 = None
         self.GraphDrawAreaTop = None
@@ -618,9 +613,15 @@ class Handler:
                 command = self._modify_command_pipeline(command, 0)
                 print(f"Starting pipeline 0: {command}")
                 self.pipelineCtrl.start_pipeline(0, command)
+                self.DrawArea1.override_background_color(
+                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 1)
+                )                
             else:  # "None" was selected
                 self.CycleDemo0 = False
                 print("Pipeline 0 set to None.")
+                self.DrawArea1.override_background_color(
+                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 0)
+                )                
 
         # Stop the current pipeline and, upon completion, execute the callback to start the new one.
         # This is non-blocking and prevents the race condition.
@@ -637,9 +638,16 @@ class Handler:
                 command = self._modify_command_pipeline(command, 1)
                 print(f"Starting pipeline 1: {command}")
                 self.pipelineCtrl.start_pipeline(1, command)
+                self.DrawArea2.override_background_color(
+                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 1)
+                )                
+
             else:  # "None" was selected
                 self.CycleDemo1 = False
                 print("Pipeline 1 set to None.")
+                self.DrawArea2.override_background_color(
+                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 0)
+                )                
 
         # Stop the current pipeline and, upon completion, execute the callback to start the new one.
         self.pipelineCtrl.stop_pipeline(1, on_stopped_callback=start_new_pipeline)
