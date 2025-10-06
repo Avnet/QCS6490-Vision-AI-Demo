@@ -2,6 +2,8 @@
 
 BASE_DIR=""
 DEMO_APP_DIR=$BASE_DIR"/opt/QCS6490-Vision-AI-Demo"
+outputmodelpath="/etc/models"
+outputlabelpath="/etc/labels"
 
 echo "Make file system writable"
 mount -o remount,rw /
@@ -45,10 +47,6 @@ download_file() {
     echo "✅ File downloaded and moved to $target_path"
 	echo ""
 }
-
-
-outputmodelpath="/etc/models"
-outputlabelpath="/etc/labels"
 
 mkdir -p "${outputmodelpath}"
 mkdir -p "${outputlabelpath}"
