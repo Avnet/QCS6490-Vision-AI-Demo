@@ -1,0 +1,1252 @@
+{
+    "ddType": 2,
+    "items": [
+        {
+            "widgetGuid": "A8CB394D-15B1-42C9-94FC-AD7BDC599E2A",
+            "widgetProperties": {
+                "i": "Image",
+                "background": "#FFFFFF",
+                "fontColor": "#343434",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "10",
+                "title": "",
+                "titleAlign": "",
+                "contents": {
+                    "option": {
+                        "imageUpload": "false",
+                        "imageUrl": "true",
+                        "imageDevice": "false",
+                        "imageTelemetry": "false",
+                        "key": "option",
+                        "position": "center"
+                    },
+                    "upload": {
+                        "imageurl": "",
+                        "key": "upload"
+                    },
+                    "url": {
+                        "imageurl": "https://saleshosted.z13.web.core.windows.net/demo/cxo2025/tria-title.png",
+                        "key": "url"
+                    },
+                    "device": {
+                        "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                        "deviceName": "",
+                        "imageurl": "",
+                        "key": "device",
+                        "deviceUniqueId": "mclTRIA6490ai"
+                    },
+                    "telemetry": {
+                        "deviceGuid": "",
+                        "deviceName": "",
+                        "imageurl": "",
+                        "key": "telemetry"
+                    }
+                }
+            },
+            "properties": {
+                "x": "0",
+                "y": "0",
+                "w": "78",
+                "h": "5",
+                "i": "Image",
+                "minW": "5",
+                "minH": "5",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "F66A9747-6C71-40E5-8639-9F53233494D2",
+            "widgetProperties": {
+                "i": "Label",
+                "background": "#41c363",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "27",
+                "title": "Resource Utilization",
+                "titleAlign": "",
+                "contents": ""
+            },
+            "properties": {
+                "x": "0",
+                "y": "5",
+                "w": "30",
+                "h": "2",
+                "i": "Label",
+                "minW": "6",
+                "minH": "2",
+                "maxH": "2",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "A8CB394D-15B1-42C9-94FC-AD7BDC599E2A",
+            "widgetProperties": {
+                "i": "Image",
+                "background": "#FFFFFF",
+                "fontColor": "#343434",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "10",
+                "title": "",
+                "titleAlign": "",
+                "contents": {
+                    "option": {
+                        "imageUpload": "false",
+                        "imageUrl": "true",
+                        "imageDevice": "false",
+                        "imageTelemetry": "false",
+                        "key": "option",
+                        "position": "stretch"
+                    },
+                    "upload": {
+                        "imageurl": "",
+                        "key": "upload"
+                    },
+                    "url": {
+                        "imageurl": "https://saleshosted.z13.web.core.windows.net/demo/cxo2025/tria-4690-description.png",
+                        "key": "url"
+                    },
+                    "device": {
+                        "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                        "deviceName": "",
+                        "imageurl": "",
+                        "key": "device",
+                        "deviceUniqueId": "mclTRIA6490ai"
+                    },
+                    "telemetry": {
+                        "deviceGuid": "",
+                        "deviceName": "",
+                        "imageurl": "",
+                        "key": "telemetry"
+                    }
+                }
+            },
+            "properties": {
+                "x": "30",
+                "y": "5",
+                "w": "18",
+                "h": "23",
+                "i": "Image",
+                "minW": "5",
+                "minH": "5",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "F66A9747-6C71-40E5-8639-9F53233494D2",
+            "widgetProperties": {
+                "i": "Label",
+                "background": "#41c363",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "26",
+                "title": "Thermal Performance",
+                "titleAlign": "",
+                "contents": ""
+            },
+            "properties": {
+                "x": "48",
+                "y": "5",
+                "w": "30",
+                "h": "2",
+                "i": "Label",
+                "minW": "6",
+                "minH": "2",
+                "maxH": "2",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "23",
+                "title": "CPU Usage (%)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "0",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "50",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "80",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "0",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "GPU Usage (%)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "0",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "50",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "80",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "10",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "Memory Usage (%)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "0",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "60",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "85",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "20",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "CPU Temp (°C)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "30",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "70",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "85",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "48",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "GPU Temp (°C)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "20",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "70",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "85",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "58",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "21A18C90-2DBC-4283-89D2-B01E1B70E363",
+            "widgetProperties": {
+                "i": "gauge",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "Memory Temp (°C)",
+                "titleAlign": "",
+                "contents": {
+                    "gauge": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "67.3",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "67.3"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.6"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "64",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "64"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:49:15.977Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "minValue": "20",
+                        "maxValue": "100",
+                        "version": "2.0",
+                        "zones": [
+                            {
+                                "zoneColor": "#7ed321",
+                                "zoneName": "green",
+                                "upToValue": "70",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "yellow",
+                                "zoneColor": "#f8e71c",
+                                "upToValue": "85",
+                                "showColorPicker": "false"
+                            },
+                            {
+                                "zoneName": "red",
+                                "zoneColor": "#d0021b",
+                                "upToValue": "100",
+                                "showColorPicker": "false"
+                            }
+                        ],
+                        "key": "gauge"
+                    }
+                }
+            },
+            "properties": {
+                "x": "68",
+                "y": "7",
+                "w": "10",
+                "h": "9",
+                "i": "gauge",
+                "minW": "10",
+                "minH": "9",
+                "maxH": "15",
+                "maxW": "16",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "8BF5A2DF-51FA-479B-B5D8-8413DC425CFF",
+            "widgetProperties": {
+                "i": "LiveLineChart",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "Performance Trends",
+                "titleAlign": "",
+                "contents": {
+                    "liveChart": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "19.45",
+                                    "attributeColor": "#4a90e2",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "19.45"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "9.31",
+                                    "attributeColor": "#bd10e0",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "9.31"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "20.91",
+                                    "attributeColor": "#f8e71c",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "20.91"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "65.7",
+                                    "attributeColor": "#4a90e2",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "65.7"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "61.2",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "61.2"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "63.6",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "63.6"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "85",
+                                    "deviceUpdatedDate": "2025-06-03T21:53:12.270Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "85"
+                                }
+                            ]
+                        },
+                        "key": "liveChart",
+                        "recentEndPoints": "12"
+                    }
+                }
+            },
+            "properties": {
+                "x": "0",
+                "y": "16",
+                "w": "30",
+                "h": "18",
+                "i": "LiveLineChart",
+                "minW": "15",
+                "minH": "15",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "8BF5A2DF-51FA-479B-B5D8-8413DC425CFF",
+            "widgetProperties": {
+                "i": "LiveLineChart",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "22",
+                "title": "Temperature Trends",
+                "titleAlign": "",
+                "contents": {
+                    "liveChart": {
+                        "device": {
+                            "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                            "deviceUniqueId": "mclTRIA6490ai"
+                        },
+                        "attributes": {
+                            "attribute": [
+                                {
+                                    "attributeGuid": "803106AC-6377-4110-A7F4-BD08594418B5",
+                                    "attributeName": "cpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "6.32",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "6.32"
+                                },
+                                {
+                                    "attributeGuid": "BB7EFAD5-2E74-42CA-8837-9536A9343E8B",
+                                    "attributeName": "gpu_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "1.18",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "1.18"
+                                },
+                                {
+                                    "attributeGuid": "6BA9F168-6B78-4E9F-B185-874AB11BCC43",
+                                    "attributeName": "memory_usage",
+                                    "checked": "false",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "13.17",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "13.17"
+                                },
+                                {
+                                    "attributeGuid": "BF4843B2-A391-45C4-A6A4-C1C553614A33",
+                                    "attributeName": "cpu_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "56.7",
+                                    "attributeColor": "#4a90e2",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "56.7"
+                                },
+                                {
+                                    "attributeGuid": "77DE1C9B-7715-4EAB-A1D4-F60761CD9EF6",
+                                    "attributeName": "gpu_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "50",
+                                    "attributeColor": "#bd10e0",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "50"
+                                },
+                                {
+                                    "attributeGuid": "97C8E718-F37D-422C-909F-73AABCE60AF5",
+                                    "attributeName": "memory_temp",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "52.3",
+                                    "attributeColor": "#f8e71c",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "52.3"
+                                },
+                                {
+                                    "attributeGuid": "99C5C80E-D690-4D3E-BEC0-22D719935CFA",
+                                    "attributeName": "critical",
+                                    "checked": "true",
+                                    "dataType": "DECIMAL",
+                                    "attributeLatestValue": "",
+                                    "deviceUpdatedDate": "2025-06-01T16:03:57.710Z",
+                                    "gatewayUpdatedDate": "NA",
+                                    "attributeValue": "NA"
+                                }
+                            ]
+                        },
+                        "key": "liveChart",
+                        "recentEndPoints": "12"
+                    }
+                }
+            },
+            "properties": {
+                "x": "48",
+                "y": "16",
+                "w": "30",
+                "h": "18",
+                "i": "LiveLineChart",
+                "minW": "15",
+                "minH": "15",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "C6C9FCF9-FAEF-49E1-B546-9E066BF9A02C",
+            "widgetProperties": {
+                "i": "Control",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "18",
+                "title": "CAM 1 ",
+                "titleAlign": "",
+                "contents": {
+                    "control": {
+                        "device": "mclTRIA6490ai",
+                        "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                        "controlType": "button",
+                        "leftText": "Start",
+                        "leftCommand": "start_demo",
+                        "leftSwitchColor": "#9b9b9b",
+                        "leftBackgroundColor": "",
+                        "leftParam": "cam1 2",
+                        "rightText": "Stop",
+                        "rightCommand": "stop_demo",
+                        "rightSwitchColor": "#41c363",
+                        "rightBackgroundColor": "",
+                        "rightParam": "cam1",
+                        "showStatus": "true",
+                        "template": "4433E6AE-24C6-41D5-9A8D-112A29152C3C",
+                        "key": "control",
+                        "parentDeviceGuid": "",
+                        "showleftSwitchColorPicker": "false",
+                        "showrightSwitchColorPicker": "false"
+                    }
+                }
+            },
+            "properties": {
+                "x": "30",
+                "y": "28",
+                "w": "9",
+                "h": "6",
+                "i": "Control",
+                "minW": "9",
+                "minH": "6",
+                "maxH": "15",
+                "maxW": "15",
+                "isStatic": "false"
+            }
+        },
+        {
+            "widgetGuid": "C6C9FCF9-FAEF-49E1-B546-9E066BF9A02C",
+            "widgetProperties": {
+                "i": "Control",
+                "background": "#000000",
+                "fontColor": "#ffffff",
+                "fontFamily": "Proxima Nova",
+                "fontSize": "18",
+                "title": "CAM 2",
+                "titleAlign": "",
+                "contents": {
+                    "control": {
+                        "device": "mclTRIA6490ai",
+                        "deviceGuid": "3361FDF0-4298-4076-80DC-CCD3B8D93522",
+                        "controlType": "button",
+                        "leftText": "Start",
+                        "leftCommand": "start_demo",
+                        "leftSwitchColor": "#9b9b9b",
+                        "leftBackgroundColor": "",
+                        "leftParam": "cam2 2",
+                        "rightText": "Stop",
+                        "rightCommand": "stop_demo",
+                        "rightSwitchColor": "#41c363",
+                        "rightBackgroundColor": "",
+                        "rightParam": "cam2",
+                        "showStatus": "true",
+                        "template": "4433E6AE-24C6-41D5-9A8D-112A29152C3C",
+                        "key": "control",
+                        "parentDeviceGuid": "",
+                        "showleftSwitchColorPicker": "false",
+                        "showrightSwitchColorPicker": "false"
+                    }
+                }
+            },
+            "properties": {
+                "x": "39",
+                "y": "28",
+                "w": "9",
+                "h": "6",
+                "i": "Control",
+                "minW": "9",
+                "minH": "6",
+                "maxH": "15",
+                "maxW": "15",
+                "isStatic": "false"
+            }
+        }
+    ]
+}

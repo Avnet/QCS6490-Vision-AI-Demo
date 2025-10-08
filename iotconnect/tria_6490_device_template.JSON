@@ -1,0 +1,118 @@
+{
+    "code": "TRIA6490ai",
+    "name": "TRIA Vision AI Kit 6490",
+    "authType": 2,
+    "attributes": [
+        {
+            "name": "cpu_usage",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "%",
+            "attributeColor": "#f44e3b",
+            "aggregateTypes": []
+        },
+        {
+            "name": "gpu_usage",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "%",
+            "attributeColor": "#16a5a5",
+            "aggregateTypes": []
+        },
+        {
+            "name": "memory_usage",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "%",
+            "attributeColor": "#7b64ff",
+            "aggregateTypes": []
+        },
+        {
+            "name": "cpu_temp",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "C",
+            "attributeColor": "#68bc00",
+            "aggregateTypes": []
+        },
+        {
+            "name": "gpu_temp",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "C",
+            "attributeColor": "#fa28ff",
+            "aggregateTypes": []
+        },
+        {
+            "name": "memory_temp",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "C",
+            "attributeColor": "#fcc400",
+            "aggregateTypes": []
+        },
+        {
+            "name": "auto_cycle_state",
+            "type": "STRING",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "demo_state",
+            "type": "STRING",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "critical",
+            "type": "DECIMAL",
+            "description": "constant",
+            "unit": "",
+            "attributeColor": "#d33115",
+            "aggregateTypes": []
+        }
+    ],
+    "commands": [
+        {
+            "name": "Stop Demo",
+            "command": "stop_demo",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Start Demo",
+            "command": "start_demo",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Auto Cycle Enable",
+            "command": "enable_auto_cycle",
+            "requiredParam": false,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Auto Cycle Disabled",
+            "command": "disable_auto_cycle",
+            "requiredParam": false,
+            "requiredAck": true,
+            "isOTACommand": false
+        }
+    ],
+    "messageVersion": "2.1",
+    "msgCode": "XG4ESFW",
+    "capability": "0",
+    "properties": {
+        "description": null,
+        "dataFrequency": "5",
+        "fileSupport": false
+    },
+    "_meta": {
+        "version": "2.0"
+    }
+}
