@@ -1307,7 +1307,7 @@
                 <property name="valign">end</property>
                 <property name="label" translatable="yes">Built with GTK, GStreamer, and Python to effectively utilize VPU, NPU, and GPU acceleration</property>
                 <style>
-                  <class name="label_m"/>
+                  <class name="label_xl"/>
                 </style>
               </object>
               <packing>
