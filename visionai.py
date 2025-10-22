@@ -212,10 +212,10 @@ class VaiDemoManager:
         )
         # Account for margins that arent included in the allocated width
         remaining_graph_width -= (
-            data_grid.get_margin_start() + data_grid.get_margin_end()
+            data_grid.get_margin_start() + data_grid.get_margin_end() + 10
         )
         remaining_graph_width -= (
-            data_grid1.get_margin_start() + data_grid1.get_margin_end()
+            data_grid1.get_margin_start() + data_grid1.get_margin_end() + 10
         )
 
         half = remaining_graph_width // 2

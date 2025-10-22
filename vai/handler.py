@@ -456,15 +456,13 @@ class Handler:
 
         self.sample_data[CPU_THERMAL_KEY] = cpu_temp
         if cpu_temp is not None:
-            GLib.idle_add(
-                self.CPU_temp.set_text, "{:.2f}".format(cpu_temp, 2)
-            )
+            GLib.idle_add(self.CPU_temp.set_text, "{:6.2f}".format(cpu_temp))
         self.sample_data[GPU_THERMAL_KEY] = gpu_temp
         if gpu_temp is not None:
-            GLib.idle_add(self.GPU_temp.set_text, "{:.2f}".format(gpu_temp, 2))
+            GLib.idle_add(self.GPU_temp.set_text, "{:6.2f}".format(gpu_temp))
         self.sample_data[MEM_THERMAL_KEY] = mem_temp
         if mem_temp is not None:
-            GLib.idle_add(self.MEM_temp.set_text, "{:.2f}".format(mem_temp, 2))
+            GLib.idle_add(self.MEM_temp.set_text, "{:6.2f}".format(mem_temp))
 
         return GLib.SOURCE_REMOVE
 
@@ -482,10 +480,10 @@ class Handler:
         self.sample_data[GPU_UTIL_KEY] = gpu_util
         self.sample_data[MEM_UTIL_KEY] = mem_util
         self.sample_data[DSP_UTIL_KEY] = dsp_util
-        GLib.idle_add(self.CPU_load.set_text, "{:.2f}".format(cpu_util, 2))
-        GLib.idle_add(self.GPU_load.set_text, "{:.2f}".format(gpu_util, 2))
-        GLib.idle_add(self.MEM_load.set_text, "{:.2f}".format(mem_util, 2))
-        GLib.idle_add(self.DSP_load.set_text, "{:.2f}".format(dsp_util, 2))
+        GLib.idle_add(self.CPU_load.set_text, "{:6.2f}".format(cpu_util))
+        GLib.idle_add(self.GPU_load.set_text, "{:6.2f}".format(gpu_util))
+        GLib.idle_add(self.MEM_load.set_text, "{:6.2f}".format(mem_util))
+        GLib.idle_add(self.DSP_load.set_text, "{:6.2f}".format(dsp_util))
         return GLib.SOURCE_REMOVE
 
     def update_sample_data(self):

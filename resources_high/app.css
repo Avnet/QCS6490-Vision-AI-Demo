@@ -92,6 +92,7 @@
  }
 
 .label_l_m {
+	font-family: Consolas, monaco, monospace;
 	font-size: 4rem;
 	font-weight: bold;
 	color: rgb(255, 0, 163);
