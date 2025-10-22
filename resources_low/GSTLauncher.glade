@@ -794,7 +794,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">CPU Usage, Avg</property>
+                    <property name="label" translatable="yes">CPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -829,7 +829,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">LPDDR5 Usage</property>
+                    <property name="label" translatable="yes">DDR use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -845,7 +845,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">GPU Usage</property>
+                    <property name="label" translatable="yes">GPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -861,7 +861,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">DSP Usage</property>
+                    <property name="label" translatable="yes">NPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -1101,7 +1101,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">CPU Max</property>
+                    <property name="label" translatable="yes">CPU</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -1136,7 +1136,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">LPDDR5</property>
+                    <property name="label" translatable="yes">DDR</property>
                     <style>
                       <class name="label_l"/>
                     </style>
