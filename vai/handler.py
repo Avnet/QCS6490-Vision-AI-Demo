@@ -12,8 +12,9 @@ from .common import (
     CLASSIFICATION,
     CPU_THERMAL_KEY,
     CPU_UTIL_KEY,
-    DEFAULT_DUAL_WINDOW,
-    DEFAULT_LEFT_WINDOW,
+    DEFAULT_SINK,
+    USB_CAM_CAPS,
+    MIPI_CAM_CAPS,
     DEPTH_SEGMENTATION,
     GPU_THERMAL_KEY,
     GPU_UTIL_KEY,
@@ -432,19 +433,20 @@ class Handler:
         except Exception as e:
             print(f"Error scanning for USB cameras: {e}")
 
-        """Scans for MIPI cameras via a gst-launch test."""
-        try:
-            print(f"Scanning for MIPI-CSI cameras...")
-            for camIndex in range(0,2):
-                try:
-                    if self._probe_mipi_camera(camIndex, MIPI_CSI_CAMERA_SCAN_TIMEOUT):
-                        self.systemCameras.append(
-                            ("MIPI CAM" + str(camIndex), "camera=" + str(camIndex), "mipi")
-                        )
-                except Exception as e:
-                    print(f"MIPI camera={camIndex} failed: {e}")
-        except Exception as e:
-            print(f"Error scanning for MIPI-CSI cameras: {e}")
+        """Scans for MIPI cameras via a gst-launch test only if there are less than 2 USB cameras."""
+        if len(self.systemCameras) < 2:
+            try:
+                print(f"Scanning for MIPI-CSI cameras...")
+                for camIndex in range(0,2):
+                    try:
+                        if self._probe_mipi_camera(camIndex, MIPI_CSI_CAMERA_SCAN_TIMEOUT):
+                            self.systemCameras.append(
+                                ("MIPI CAM" + str(camIndex), "camera=" + str(camIndex), "mipi")
+                            )
+                    except Exception as e:
+                        print(f"MIPI camera={camIndex} failed: {e}")
+            except Exception as e:
+                print(f"Error scanning for MIPI-CSI cameras: {e}")
             
         return len(self.systemCameras)
 
@@ -572,12 +574,8 @@ class Handler:
 
         # NOTE: if fpsdisplaysink is used, the video-sink property needs wrapped; "" does that
         command = command.replace(
-            "<SINGLE_DISPLAY>",
-            f'{displaysink_text}{DEFAULT_LEFT_WINDOW}',
-        )
-        command = command.replace(
-            "<DUAL_DISPLAY>",
-            f'{displaysink_text}{DEFAULT_DUAL_WINDOW}',
+            "<DISPLAY_SINK>",
+            f'{displaysink_text}{DEFAULT_SINK}',
         )
 
         # TODO: If we do file processing, we'll need to support that around here
@@ -587,14 +585,14 @@ class Handler:
         
         if stream_index == 0 and self.cam1 != None:
             if self.cam1Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam1} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam1} name=videosource" + USB_CAM_CAPS + health_monitor_addin)
             elif self.cam1Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam1} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam1} name=videosource" + MIPI_CAM_CAPS + health_monitor_addin)
         elif self.cam2 != None:
             if self.cam2Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam2} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam2} name=videosource" + USB_CAM_CAPS + health_monitor_addin)
             elif self.cam2Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam2} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam2} name=videosource" + MIPI_CAM_CAPS + health_monitor_addin)
         else:
             command = command.replace("<DATA_SRC>",f" videotestsrc name=videosource" + health_monitor_addin)
             
