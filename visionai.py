@@ -85,64 +85,38 @@ MAX_UTIL_DISPLAYED = 100
 # --- End Graphing constants ---
 def is_monitor_above_2k():
     """
-    Checks if any connected monitor has a native resolution greater than 2K (2560x1440).
-    Uses EDID data from /sys/class/drm/ to determine resolution.
-    
+    Gets the resolution of all connected monitors using GTK.
+    This method is compatible with both Wayland and X11.
+
     Returns:
-        bool: True if any monitor has resolution > 2560x1440, False otherwise.
+        returns True if a monitor has a resolution above 2K.
     """
-    drm_path = '/sys/class/drm/'
+    print('getting resolution')
+
     above_2k = False
-
-    try:
-        for device in os.listdir(drm_path):
-            # Look for connected display devices (e.g., card0-HDMI-A-1, card0-eDP-1)
-            if not device.startswith('card'):
-                continue
-
-            status_file = os.path.join(drm_path, device, 'status')
-            edid_file = os.path.join(drm_path, device, 'edid')
-
-            # Only check if the monitor is connected
-            if os.path.exists(status_file) and os.path.exists(edid_file):
-                with open(status_file, 'r') as f:
-                    if f.read().strip() != 'connected':
-                        continue
-
-                # Read EDID data
-                with open(edid_file, 'rb') as f:
-                    edid_data = f.read()
-
-                if len(edid_data) < 128:
-                    continue  # Invalid EDID
-
-                # Parse EDID to get the native resolution
-                # Detailed Timing Descriptor 1 starts at 54th byte
-                dtd_start = 54
-                if dtd_start + 18 <= len(edid_data):
-                    # First DTD (usually the preferred/native mode)
-                    dtd = edid_data[dtd_start:dtd_start+18]
-
-                    # Parse horizontal active pixels (bytes 2-3)
-                    h_active_lo = dtd[2]
-                    h_active_hi = (dtd[4] & 0xF0) >> 4
-                    width = h_active_lo + (h_active_hi << 8)
-
-                    # Parse vertical active lines (bytes 5-6)
-                    v_active_lo = dtd[5]
-                    v_active_hi = (dtd[7] & 0xF0) >> 4
-                    height = v_active_lo + (v_active_hi << 8)
-
-                    # Check if resolution is greater than 2K (2560x1440)
-                    if width > 2560 or height > 1440:
-                        # Confirm it's a valid resolution
-                        if width >= 3840 or height >= 2160:
-                            above_2k = True
-                            break  # Found a 4K or higher display
-
-    except Exception as e:
-        print(f"Error reading EDID: {e}")
-        return False
+    resolutions = []
+    # Gdk.Display.get_default() will correctly connect to
+    # the running display server (Wayland or X11).
+    display = Gdk.Display.get_default()
+    if not display:
+        print("Could not get default display.")
+    else:
+        num_monitors = display.get_n_monitors()
+        print("monitor count:", num_monitors)
+        for i in range(num_monitors):
+            monitor = display.get_monitor(i)
+            if monitor:
+                geometry = monitor.get_geometry()
+                # The geometry gives the current resolution of the monitor.
+                resolutions.append((geometry.width, geometry.height))
+                print("width:", geometry.width, " height:", geometry.height)
+                # Check if resolution is greater than 2K (2560x1440)
+                if geometry.width > 2560 or geometry.height > 1440:
+                    # Confirm it's a valid resolution
+                    if geometry.width >= 3840 or geometry.height >= 2160:
+                        above_2k = True
+                        print("found a monitor with resolution 2K or greater")
+                        break  # Found a 2K or higher display
 
     return above_2k
 
