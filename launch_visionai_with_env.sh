@@ -10,7 +10,6 @@ export QMONITOR_BACKEND_LIB_PATH=/var/QualcommProfiler/libs/backends/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/var/QualcommProfiler/libs/
 export PATH=$PATH:/data/shared/QualcommProfiler/bins
 
-export XDG_RUNTIME_DIR=/dev/socket/weston
-export WAYLAND_DISPLAY=wayland-1
+export XDG_RUNTIME_DIR=/run/user/0
 
 exec "$VISIONAI_PATH"

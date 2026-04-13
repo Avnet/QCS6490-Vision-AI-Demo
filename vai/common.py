@@ -132,7 +132,8 @@ def app_version():
         # Handle errors, such as not being in a Git repository
         return "unknown"
 
-
-APP_HEADER = f"{APP_NAME} v({app_version()})"
+## Disbaling version check due to missing git on device
+# APP_HEADER = f"{APP_NAME} v({app_version()})"
+APP_HEADER = f"{APP_NAME})"
 
 #gst-launch-1.0 -e --gst-debug=2 v4l2src device=/dev/v4l/by-id/usb-046d_Logi_Webcam_C920e_FF7FCEDF-video-index0 name=videosource ! qtivtransform ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 ! identity signal-handoffs=true name=id ! tee name=split split. ! queue max-size-buffers=1 leaky=downstream ! qtivcomposer name=mixer ! fpsdisplaysink text-overlay=true video-sink=gtksink name="videosink" sync=false split. ! queue max-size-buffers=1 leaky=downstream ! qtimlvconverter ! queue max-size-buffers=1 leaky=downstream ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options="QNNExternalDelegate,backend_type=htp;" model=/etc/models/hrnet_pose_quantized.tflite ! queue max-size-buffers=1 leaky=downstream ! qtimlpostprocess results=2 module=hrnet labels=/etc/labels/hrnet_pose.json settings=/etc/labels/hrnet_settings.json ! qtivtransform ! video/x-raw,format=BGRA,width=640,height=360 ! queue max-size-buffers=1 leaky=downstream ! mixer.

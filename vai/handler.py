@@ -173,7 +173,7 @@ class Pipeline:
         videosink_widget.show()
         # Now that the widget is part of the UI, we can tell the pipeline to play.
         # This must be scheduled on the GStreamer thread's context.
-        GLib.idle_add(self._set_pipeline_to_playing, context=self.main_context)
+        GLib.idle_add(self._set_pipeline_to_playing)
         return GLib.SOURCE_REMOVE
 
     def _set_pipeline_to_playing(self):
@@ -245,20 +245,20 @@ class PipelineCtrl:
 
     def set_video_sink(self, index, sink):
         if index == 0:
-            GLib.idle_add(self.Pipeline0.set_sink, sink, context=self.gstreamer_main_context)
+            GLib.idle_add(self.Pipeline0.set_sink, sink)
         else:
-            GLib.idle_add(self.Pipeline1.set_sink, sink, context=self.gstreamer_main_context)
+            GLib.idle_add(self.Pipeline1.set_sink, sink)
     
     def start_pipeline(self, index, command):
         if index == 0:
-            GLib.idle_add(self.Pipeline0.start, command, context=self.gstreamer_main_context)
+            GLib.idle_add(self.Pipeline0.start, command)
         else:
-            GLib.idle_add(self.Pipeline1.start, command, context=self.gstreamer_main_context)
+            GLib.idle_add(self.Pipeline1.start, command)
 
     def stop_pipeline(self, index, on_stopped_callback=None):
         pipeline_to_stop = self.Pipeline0 if index == 0 else self.Pipeline1
         # Schedule the stop command on the GStreamer thread, passing the callback
-        GLib.idle_add(pipeline_to_stop.stop, on_stopped_callback, context=self.gstreamer_main_context)
+        GLib.idle_add(pipeline_to_stop.stop, on_stopped_callback)
 
     def pipelines_finished(self):
         return True if self.Pipeline0.pipeline == None and self.Pipeline1.pipeline == None else False
