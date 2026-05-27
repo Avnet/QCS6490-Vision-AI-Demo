@@ -1,10 +1,17 @@
+import multiprocessing as mp
 import pathlib
 import subprocess
 import os
 from vai.qprofile import QProfProcess
-import gi
+from vai.pipeline_process import gstreamer_process
+import time
 import threading
-from gi.repository import Gdk
+import queue as q_lib
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version('Gst', '1.0')
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gtk, Gdk, GLib, Gst, GdkPixbuf
 
 from .common import (
     APP_NAME,
@@ -12,8 +19,8 @@ from .common import (
     CLASSIFICATION,
     CPU_THERMAL_KEY,
     CPU_UTIL_KEY,
-    DEFAULT_DUAL_WINDOW,
-    DEFAULT_LEFT_WINDOW,
+    USB_CAM_CAPS,
+    MIPI_CAM_CAPS,
     DEPTH_SEGMENTATION,
     GPU_THERMAL_KEY,
     GPU_UTIL_KEY,
@@ -28,12 +35,6 @@ from .common import (
     QUIT_CLEANUP_DELAY_ms
 )
 from .temp_profile import get_cpu_gpu_mem_temps
-
-# Locks app version, prevents warnings
-gi.require_version("Gtk", "3.0")
-gi.require_version('Gst', '1.0') 
-
-from gi.repository import GLib, Gtk, Gst
 
 # needed to release gstreamer with cv2
 os.environ['OPENCV_VIDEOIO_PRIORITY_MSMF'] = '0'
@@ -51,223 +52,11 @@ DUAL_WINDOW_DEMOS = ["add drop down items here if needed"]
 
 PIPELINE_HEALTH_SIGNAL = "identity signal-handoffs=true name=id"
 
-class Pipeline:
-    def __init__(self, name, main_loop, main_context):
-        self.name = name
-        self.main_loop = main_loop
-        self.main_context = main_context
-        self.pipeline = None
-        self.videosink = None
-        self.is_stopping = False
-
-    def set_sink(self, sink):
-        self.videosink = sink
-        return GLib.SOURCE_REMOVE
-
-    def start(self, command):
-        """Parse, configure, and start the GStreamer pipeline."""
-        if self.pipeline:
-            print(f"[{self.name}] Warning: Pipeline already running. Stop it first.")
-            return GLib.SOURCE_REMOVE
-
-        print(f"[{self.name}] Assigning command and starting stream...")
-        self.pipeline = Gst.parse_launch(command)
-
-        bus = self.pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self.on_message)
-        self.pipeline.set_auto_flush_bus(True)
-        self.pipeline.iterate_elements().foreach(self._set_queue_properties)
-
-        videosink_element = self.pipeline.get_by_name("videosink")
-        if videosink_element:
-            videosink_widget = videosink_element.props.video_sink.props.widget
-            # Schedule linking the widget to the UI on the main GTK thread
-            # This function will then trigger setting the pipeline to PLAYING.
-            GLib.idle_add(self._link_stream_to_gtk, videosink_widget)
-        else:
-            print(f"[{self.name}] Error: no 'videosink' element found in the pipeline.")
-            self.pipeline.set_state(Gst.State.NULL)
-            self.pipeline = None
-
-        return GLib.SOURCE_REMOVE
-
-    def stop(self, on_stopped_callback=None):
-        """Stop and clean up the GStreamer pipeline."""
-        if not self.pipeline:
-            # Pipeline is already fully stopped.
-            if on_stopped_callback:
-                GLib.idle_add(on_stopped_callback)
-            return GLib.SOURCE_REMOVE
-
-        # If a stop is already in progress, just update the callback to the latest one.
-        # The ongoing stop process will then trigger this new callback when it's done.
-        self._on_stopped_callback = on_stopped_callback
-
-        if self.is_stopping:
-            # A stop is already underway. The callback has been updated. Nothing more to do.
-            print(f"[{self.name}] Stop already in progress. Updating callback.")
-            return GLib.SOURCE_REMOVE
-
-        # This is a new stop request.
-        print(f"[{self.name}] Stopping pipeline...")
-        self.is_stopping = True
-        # Request state change to NULL. The on_message handler will complete the cleanup.
-        ret = self.pipeline.set_state(Gst.State.NULL)
-        if ret == Gst.StateChangeReturn.ASYNC:
-            print(f"[{self.name}] Waiting for pipeline to stop asynchronously...")
-        else:
-            # If the state change is not async, it's either already stopped (SUCCESS)
-            # or failed. In either case, we should finalize immediately to un-stick the state.
-            print(f"[{self.name}] Pipeline stop was not async (ret={ret.value_nick}). Finalizing immediately.")
-            self._finalize_stop()
-
-        return GLib.SOURCE_REMOVE
-
-    def _finalize_stop(self):
-        """Performs the actual resource cleanup after pipeline state is NULL."""
-        print(f"[{self.name}] Finalizing pipeline stop.")
-        if not self.pipeline:
-            return
- 
-        # Schedule UI cleanup on the main GTK thread
-        GLib.idle_add(self._clear_gtkbox)
-
-        # Clean up GStreamer resources
-        bus = self.pipeline.get_bus()
-        if bus:
-            bus.remove_signal_watch()
-        
-        self.pipeline = None
-        self.is_stopping = False
-        print(f"[{self.name}] Pipeline stopped and cleaned up.")
-
-        # If a callback was provided, schedule it on the main thread.
-        if hasattr(self, '_on_stopped_callback') and self._on_stopped_callback:
-            GLib.idle_add(self._on_stopped_callback)
-            self._on_stopped_callback = None
-
-    def on_message(self, bus, message):
-        t = message.type
-
-        if t == Gst.MessageType.EOS:
-            print(f"[{self.name}] Got EOS from sink pipeline")
-
-        elif t == Gst.MessageType.ERROR:
-            err, debug = message.parse_error()
-            print(f"[{self.name}][{message.src.get_name()}] Error: {err.message}")
-
-        elif t == Gst.MessageType.STATE_CHANGED:
-            # We only care about messages from the pipeline itself
-            if message.src == self.pipeline:
-                old_state, new_state, pending_state = message.parse_state_changed()
-                print(f"[{self.name}] Pipeline state changed from {old_state.value_nick} to {new_state.value_nick}.")
-                # If we were stopping and the new state is NULL, finalize the cleanup
-                if self.is_stopping and new_state == Gst.State.NULL:
-                    self._finalize_stop() # This runs on the GStreamer thread
-        return True
-
-    def _link_stream_to_gtk(self, videosink_widget):
-        self.videosink.pack_start(videosink_widget, True, True, 0)
-        videosink_widget.show()
-        # Now that the widget is part of the UI, we can tell the pipeline to play.
-        # This must be scheduled on the GStreamer thread's context.
-        GLib.idle_add(self._set_pipeline_to_playing, context=self.main_context)
-        return GLib.SOURCE_REMOVE
-
-    def _set_pipeline_to_playing(self):
-        """Sets the pipeline to PLAYING state. Should be called from the GStreamer thread."""
-        if self.pipeline:
-            print(f"[{self.name}] UI sink ready. Setting pipeline to PLAYING.")
-            self.pipeline.set_state(Gst.State.PLAYING)
-        return GLib.SOURCE_REMOVE
-
-    def _clear_gtkbox(self):
-        #clear previous elements
-        for child in self.videosink.get_children():
-            self.videosink.remove(child)
-        return GLib.SOURCE_REMOVE
-
-    def _set_queue_properties(self, element):
-        if element.get_factory().get_name().startswith('queue'):
-            element.set_property("max-size-buffers", 10)
-            element.set_property("max-size-bytes", 1 * 1024 * 1024)  # 1 MB
-            element.set_property("max-size-time", 0.1 * Gst.SECOND)  # 0.1 second
-            element.set_property("leaky", 2) 
-
-    def _check_pipeline_state(self):
-        """Checks and prints the current state of the pipeline."""
-        state_return, state, pending = self.pipeline.get_state(Gst.CLOCK_TIME_NONE) # Get state immediately
-        if state_return == Gst.StateChangeReturn.SUCCESS:
-            #print(f"Pipeline is in state: {state.value_nick}")
-            return state
-        else:
-            print(f"Failed to get pipeline state. Return: {state_return}")
-            return state
-
-class PipelineCtrl:
-    def __init__(self):
-        self.gstreamer_main_loop = None
-        self.gstreamer_main_context = None
-        self.gst_thread_started = threading.Event()
-
-        # Start the GStreamer thread
-        self.gst_thread = threading.Thread(target=self._gstreamer_thread_main, name="GstLoopThread")
-        self.gst_thread.start()
-
-        # Wait for the GStreamer loop to initialize
-        self.gst_thread_started.wait(timeout=2)
-        if not self.gstreamer_main_loop:
-            raise RuntimeError("GStreamer thread failed to initialize.")
-
-        self.Pipeline0 = Pipeline("pipeline-0", self.gstreamer_main_loop, self.gstreamer_main_context)
-        self.Pipeline1 = Pipeline("pipeline-1", self.gstreamer_main_loop, self.gstreamer_main_context)
-
-    def _gstreamer_thread_main(self):
-        """This function runs in the separate GStreamer thread."""
-        # 1. Create a new GMainContext for this thread.
-        self.gstreamer_main_context = GLib.MainContext.new()
-
-        # 2. Set this context as the thread's default.
-        self.gstreamer_main_context.push_thread_default()
-
-        # 3. Create a GLib.MainLoop using this context.
-        self.gstreamer_main_loop = GLib.MainLoop.new(self.gstreamer_main_context, False)
-        self.gst_thread_started.set() # Signal that the loop is ready
-
-        print(f"GStreamer thread: MainLoop started in thread {threading.current_thread().name}")
-        self.gstreamer_main_loop.run()
-
-        # Clean up after the loop exits
-        print(f"GStreamer thread: MainLoop finished in thread {threading.current_thread().name}")
-        self.gstreamer_main_context.pop_thread_default() # Unset the thread default context
-
-    def set_video_sink(self, index, sink):
-        if index == 0:
-            GLib.idle_add(self.Pipeline0.set_sink, sink, context=self.gstreamer_main_context)
-        else:
-            GLib.idle_add(self.Pipeline1.set_sink, sink, context=self.gstreamer_main_context)
-    
-    def start_pipeline(self, index, command):
-        if index == 0:
-            GLib.idle_add(self.Pipeline0.start, command, context=self.gstreamer_main_context)
-        else:
-            GLib.idle_add(self.Pipeline1.start, command, context=self.gstreamer_main_context)
-
-    def stop_pipeline(self, index, on_stopped_callback=None):
-        pipeline_to_stop = self.Pipeline0 if index == 0 else self.Pipeline1
-        # Schedule the stop command on the GStreamer thread, passing the callback
-        GLib.idle_add(pipeline_to_stop.stop, on_stopped_callback, context=self.gstreamer_main_context)
-
-    def pipelines_finished(self):
-        return True if self.Pipeline0.pipeline == None and self.Pipeline1.pipeline == None else False
-
-    def quit_gstreamer_main_loop(self):
-        if self.gstreamer_main_loop and self.gstreamer_main_loop.is_running():
-            self.gstreamer_main_loop.quit()
-
 class Handler:
-    def __init__(self, display_fps_metrics=True):
+    def __init__(self):
+
+        self.queue0 = mp.Queue(maxsize=10)
+        self.queue1 = mp.Queue(maxsize=10)
 
         self.demoList = [
             None,
@@ -280,7 +69,6 @@ class Handler:
         ]
 
         self.QProf = QProfProcess()
-        self.pipelineCtrl = PipelineCtrl()
         self.MainWindowShown = False
         self.MainWindow = None
         self.aboutWindow = None
@@ -304,7 +92,6 @@ class Handler:
         self.GraphDrawAreaBottom = None
         self.demo_selection0 = None
         self.demo_selection1 = None
-        self.display_fps_metrics = display_fps_metrics
         self.systemCameras = []
         self.dualDemoRunning0 = False
         self.dualDemoRunning1 = False
@@ -312,6 +99,18 @@ class Handler:
         self.CycleDemo1 = False
         self.demoSelection0Cnt = 0
         self.demoSelection1Cnt = 0
+
+        self.Pipeline0 = None
+        self.Pipeline1 = None
+        self.Pipeline0closing = False
+        self.Pipeline1closing = False
+        self.Pipeline0Sink = None
+        self.Pipeline1Sink = None
+        self.Pipeline0StopEvent = mp.Event()
+        self.Pipeline1StopEvent = mp.Event()
+
+        GLib.timeout_add(10, self.on_frame_received_pipe0)
+        GLib.timeout_add(10, self.on_frame_received_pipe1)
 
         # TODO: protect with sync primitive?
         self.sample_data = {
@@ -328,7 +127,73 @@ class Handler:
 
 
     def set_video_sink(self, index, sink):
-        self.pipelineCtrl.set_video_sink(index, sink)
+        if index == 0:
+            self.Pipeline0Sink = sink
+        else:
+            self.Pipeline1Sink = sink
+
+    def StartPipeline(self, index, command):
+        pipelines = {
+            0: ('Pipeline0', 'Pipeline0StopEvent', 'queue0', 'Pipeline0closing'),
+            1: ('Pipeline1', 'Pipeline1StopEvent', 'queue1', 'Pipeline1closing'),
+        }
+        
+        attr_name, stop_event_attr, queue_attr, closing_attr = pipelines[index]
+        stop_event = getattr(self, stop_event_attr)
+        queue = getattr(self, queue_attr)
+
+        if getattr(self, attr_name) is not None:
+            self.StopPipeline(index)
+            time.sleep(0.5)
+        
+        print(f"Initializing GStreamer subprocess in pipeline {index}...")
+        stop_event.clear()
+        process = mp.Process(target=gstreamer_process, args=(command, queue, stop_event))
+        
+        try:
+            setattr(self, closing_attr, False)
+            process.start()
+            setattr(self, attr_name, process)
+        except Exception as e:
+            setattr(self, closing_attr, True)
+            print(f"Unable to start pipeline {index}: {e}")   
+
+    def StopPipeline(self, index):
+        pipelines = {
+            0: ('Pipeline0', 'Pipeline0StopEvent', 'queue0', 'Pipeline0closing'),
+            1: ('Pipeline1', 'Pipeline1StopEvent', 'queue1', 'Pipeline1closing'),
+        }
+        
+        attr_name, stop_event_attr, queue_attr, closing_attr = pipelines[index]
+        current_pipe = getattr(self, attr_name)
+        stop_event = getattr(self, stop_event_attr)
+        queue = getattr(self, queue_attr)
+
+        if current_pipe is None:
+            return
+
+        print("Requesting graceful stop...")
+        stop_event.set()
+        
+        start_time = time.monotonic()
+        while current_pipe.is_alive() and (time.monotonic() - start_time) < 10.0:
+            try:
+                queue.get_nowait()
+            except q_lib.Empty:
+                time.sleep(0.01)
+
+        if current_pipe.is_alive():
+            print("Process did not stop gracefully, forcing termination...")
+            current_pipe.terminate()
+            current_pipe.join(timeout=1)
+            if current_pipe.is_alive():
+                current_pipe.kill()
+                current_pipe.join()
+
+        setattr(self, closing_attr, True)
+        setattr(self, attr_name, None)  # Clear the pipeline reference
+        
+        print("Pipeline stopped and cleaned up.")   
 
     def update_camera_information(self):
         self.cameraCount = self.scan_for_connected_cameras()
@@ -354,6 +219,8 @@ class Handler:
         Probes for a MIPI camera using GStreamer's Python API.
         Returns True if the camera is detected, False otherwise.
         """
+        Gst.init(None)
+
         print(f"Probing for MIPI camera index: {camera_index} using GStreamer API...")
         
         src = Gst.ElementFactory.make("qtiqmmfsrc", f"mipi-probe-{camera_index}")
@@ -409,7 +276,6 @@ class Handler:
         
         return found
 
-
     def scan_for_connected_cameras(self):
         """Scans for USB cameras via v4l, populating the USBCameras list with the camera name and path, returning the number of cameras found."""
         try:
@@ -432,19 +298,20 @@ class Handler:
         except Exception as e:
             print(f"Error scanning for USB cameras: {e}")
 
-        """Scans for MIPI cameras via a gst-launch test."""
-        try:
-            print(f"Scanning for MIPI-CSI cameras...")
-            for camIndex in range(0,2):
-                try:
-                    if self._probe_mipi_camera(camIndex, MIPI_CSI_CAMERA_SCAN_TIMEOUT):
-                        self.systemCameras.append(
-                            ("MIPI CAM" + str(camIndex), "camera=" + str(camIndex), "mipi")
-                        )
-                except Exception as e:
-                    print(f"MIPI camera={camIndex} failed: {e}")
-        except Exception as e:
-            print(f"Error scanning for MIPI-CSI cameras: {e}")
+        """Scans for MIPI cameras via a gst-launch test only if there are less than 2 USB cameras."""
+        if len(self.systemCameras) < 2:
+            try:
+                print(f"Scanning for MIPI-CSI cameras...")
+                for camIndex in range(0,2):
+                    try:
+                        if self._probe_mipi_camera(camIndex, MIPI_CSI_CAMERA_SCAN_TIMEOUT):
+                            self.systemCameras.append(
+                                ("MIPI CAM" + str(camIndex), "camera=" + str(camIndex), "mipi")
+                            )
+                    except Exception as e:
+                        print(f"MIPI camera={camIndex} failed: {e}")
+            except Exception as e:
+                print(f"Error scanning for MIPI-CSI cameras: {e}")
             
         return len(self.systemCameras)
 
@@ -456,15 +323,13 @@ class Handler:
 
         self.sample_data[CPU_THERMAL_KEY] = cpu_temp
         if cpu_temp is not None:
-            GLib.idle_add(
-                self.CPU_temp.set_text, "{:.2f}".format(cpu_temp, 2)
-            )
+            GLib.idle_add(self.CPU_temp.set_text, "{:6.2f}".format(cpu_temp))
         self.sample_data[GPU_THERMAL_KEY] = gpu_temp
         if gpu_temp is not None:
-            GLib.idle_add(self.GPU_temp.set_text, "{:.2f}".format(gpu_temp, 2))
+            GLib.idle_add(self.GPU_temp.set_text, "{:6.2f}".format(gpu_temp))
         self.sample_data[MEM_THERMAL_KEY] = mem_temp
         if mem_temp is not None:
-            GLib.idle_add(self.MEM_temp.set_text, "{:.2f}".format(mem_temp, 2))
+            GLib.idle_add(self.MEM_temp.set_text, "{:6.2f}".format(mem_temp))
 
         return GLib.SOURCE_REMOVE
 
@@ -482,10 +347,10 @@ class Handler:
         self.sample_data[GPU_UTIL_KEY] = gpu_util
         self.sample_data[MEM_UTIL_KEY] = mem_util
         self.sample_data[DSP_UTIL_KEY] = dsp_util
-        GLib.idle_add(self.CPU_load.set_text, "{:.2f}".format(cpu_util, 2))
-        GLib.idle_add(self.GPU_load.set_text, "{:.2f}".format(gpu_util, 2))
-        GLib.idle_add(self.MEM_load.set_text, "{:.2f}".format(mem_util, 2))
-        GLib.idle_add(self.DSP_load.set_text, "{:.2f}".format(dsp_util, 2))
+        GLib.idle_add(self.CPU_load.set_text, "{:6.2f}".format(cpu_util))
+        GLib.idle_add(self.GPU_load.set_text, "{:6.2f}".format(gpu_util))
+        GLib.idle_add(self.MEM_load.set_text, "{:6.2f}".format(mem_util))
+        GLib.idle_add(self.DSP_load.set_text, "{:6.2f}".format(dsp_util))
         return GLib.SOURCE_REMOVE
 
     def update_sample_data(self):
@@ -513,35 +378,23 @@ class Handler:
         if self.QProf is not None:
             self.QProf.Close()
 
-        # Asynchronously stop the pipelines. The stop() method will ensure
-        # resources are released cleanly when the state change is complete.
-        self.pipelineCtrl.stop_pipeline(0)
-        self.pipelineCtrl.stop_pipeline(1)
+        self.StopPipeline(0)
+        self.StopPipeline(1)
 
         # Schedule the final shutdown sequence. This polling mechanism waits
         # for the async pipeline cleanup to complete.
         GLib.timeout_add(QUIT_CLEANUP_DELAY_ms, self.quit_application, *args)
 
     def quit_application(self, *args):
-        # This check is now meaningful. It will be false until the pipelines
-        # have fully transitioned to NULL and set their self.pipeline to None.
-        if self.pipelineCtrl.pipelines_finished():
-            print("All pipelines cleaned up. Quitting GStreamer loop.")
-            self.pipelineCtrl.quit_gstreamer_main_loop()
+        print("Waiting for background threads to join...")
+        # Join threads to ensure they exit cleanly before the main process
+        if self.QProf and self.QProf.is_alive():
+            self.QProf.Close()
+            self.QProf.join(timeout=10.0)
 
-            print("Waiting for background threads to join...")
-            # Join threads to ensure they exit cleanly before the main process
-            if self.QProf and self.QProf.is_alive():
-                self.QProf.join(timeout=2.0)
-            if self.pipelineCtrl.gst_thread and self.pipelineCtrl.gst_thread.is_alive():
-                self.pipelineCtrl.gst_thread.join(timeout=2.0)
-
-            print("Exiting GTK main loop.")
-            Gtk.main_quit(*args)
-            return GLib.SOURCE_REMOVE # Stop the timer
-        else:
-            print("Waiting for pipelines to finish cleanup...")
-            return GLib.SOURCE_CONTINUE
+        print("Exiting GTK main loop.")
+        Gtk.main_quit(*args)
+        return GLib.SOURCE_REMOVE # Stop the timer
 
     def close_dialog(self, *args):
         if self.dialogWindow:
@@ -561,107 +414,69 @@ class Handler:
             GLib.timeout_add(CAMERA_SCAN_DELAY_ms, self.update_camera_information)
 
     def _modify_command_pipeline(
-        self, command, stream_index, inject_health_signal=True
+        self, command, stream_index
     ):
         """Modify GST pipeline by replacing placeholders with runtime values."""
-
-        # TODO: support l/r windows through parameterization or other technique
-        displaysink_text = (
-            "fpsdisplaysink text-overlay=true video-sink="
-            if self.display_fps_metrics
-            else ""
-        )
-
-        # NOTE: if fpsdisplaysink is used, the video-sink property needs wrapped; "" does that
-        command = command.replace(
-            "<SINGLE_DISPLAY>",
-            f'{displaysink_text}{DEFAULT_LEFT_WINDOW}',
-        )
-        command = command.replace(
-            "<DUAL_DISPLAY>",
-            f'{displaysink_text}{DEFAULT_DUAL_WINDOW}',
-        )
-
-        # TODO: If we do file processing, we'll need to support that around here
-        health_monitor_addin = (
-            " ! " + PIPELINE_HEALTH_SIGNAL if inject_health_signal else ""
-        )
-        
         if stream_index == 0 and self.cam1 != None:
             if self.cam1Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam1} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam1} name=videosource" + USB_CAM_CAPS)
+                #command = command.replace("<DATA_SRC>",f"v4l2src io-mode=4 device={self.cam1} name=videosource" + USB_CAM_CAPS)
             elif self.cam1Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam1} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam1} name=videosource" + MIPI_CAM_CAPS)
         elif self.cam2 != None:
             if self.cam2Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam2} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam2} name=videosource" + USB_CAM_CAPS)
             elif self.cam2Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam2} name=videosource" + health_monitor_addin)
+                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam2} name=videosource" + MIPI_CAM_CAPS)
         else:
-            command = command.replace("<DATA_SRC>",f" videotestsrc name=videosource" + health_monitor_addin)
+            command = command.replace("<DATA_SRC>",f" videotestsrc name=videosource")
             
         return command
 
     def SwitchPipeline0(self, combo):
         index = combo.get_active()
-
-        def start_new_pipeline():
-            """This function is called after the old pipeline is confirmed to be stopped."""
-            if index > 0:  # A demo other than "None" was selected
-                self.CycleDemo0 = True
-                command = self.demoList[index][:]
-                command = self._modify_command_pipeline(command, 0)
-                print(f"Starting pipeline 0: {command}")
-                self.pipelineCtrl.start_pipeline(0, command)
-                self.DrawArea1.override_background_color(
-                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 1)
-                )                
-            else:  # "None" was selected
-                self.CycleDemo0 = False
-                print("Pipeline 0 set to None.")
-                self.DrawArea1.override_background_color(
-                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 0)
-                )                
-
-        # Stop the current pipeline and, upon completion, execute the callback to start the new one.
-        # This is non-blocking and prevents the race condition.
-        self.pipelineCtrl.stop_pipeline(0, on_stopped_callback=start_new_pipeline)
+        """This function is called after the old pipeline is confirmed to be stopped."""
+        if index > 0:  # A demo other than "None" was selected
+            self.CycleDemo0 = True
+            command = self.demoList[index][:]
+            command = self._modify_command_pipeline(command, 0)
+            print(f"Starting pipeline 0: {command}")
+            self.StartPipeline(0, command)
+            self.Pipeline0Sink.show()
+        else:  # "None" was selected
+            self.CycleDemo0 = False
+            self.StopPipeline(0)
+            print("Pipeline 0 set to None.")
+            self.Pipeline0Sink.hide()
 
     def SwitchPipeline1(self, combo):
         index = combo.get_active()
-
-        def start_new_pipeline():
-            """This function is called after the old pipeline is confirmed to be stopped."""
-            if index > 0:  # A demo other than "None" was selected
-                self.CycleDemo1 = True
-                command = self.demoList[index][:]
-                command = self._modify_command_pipeline(command, 1)
-                print(f"Starting pipeline 1: {command}")
-                self.pipelineCtrl.start_pipeline(1, command)
-                self.DrawArea2.override_background_color(
-                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 1)
-                )                
-
-            else:  # "None" was selected
-                self.CycleDemo1 = False
-                print("Pipeline 1 set to None.")
-                self.DrawArea2.override_background_color(
-                    Gtk.StateType.NORMAL, Gdk.RGBA(0, 0, 0, 0)
-                )                
-
-        # Stop the current pipeline and, upon completion, execute the callback to start the new one.
-        self.pipelineCtrl.stop_pipeline(1, on_stopped_callback=start_new_pipeline)
+        """This function is called after the old pipeline is confirmed to be stopped."""
+        if index > 0:  # A demo other than "None" was selected
+            self.CycleDemo1 = True
+            command = self.demoList[index][:]
+            command = self._modify_command_pipeline(command, 1)
+            print(f"Starting pipeline 1: {command}")
+            self.StartPipeline(1, command)
+            self.Pipeline1Sink.show()    
+        else:  # "None" was selected
+            self.CycleDemo1 = False
+            self.StopPipeline(1)
+            print("Pipeline 1 set to None.")
+            self.Pipeline1Sink.hide()
 
     def demo0_selection_changed_cb(self, combo):
         """Signal handler for the 1st demo selection combo box."""
         # This is a GTK signal handler, so it runs on the main UI thread.
         # The SwitchPipeline function is non-blocking, so we can call it directly.
+        self.demo0Interval = 0
         self.SwitchPipeline0(combo)
 
     def demo1_selection_changed_cb(self, combo):
         """Signal handler for the 2nd demo selection combo box."""
         # This is a GTK signal handler, so it runs on the main UI thread.
         # The SwitchPipeline function is non-blocking, so we can call it directly.
+        self.demo1Interval = 0
         self.SwitchPipeline1(combo)
 
     def automateDemo(self):
@@ -718,3 +533,63 @@ class Handler:
                 self.demo1Interval = self.demo1Interval + 1
 
         return GLib.SOURCE_CONTINUE
+
+    def on_frame_received_pipe0(self):
+        if (self.Pipeline0 == None):
+            return GLib.SOURCE_CONTINUE
+        
+        try:
+            # Use non-blocking get to ensure the UI thread never hangs
+            self.Pipeline0ImageArray = self.queue0.get_nowait()
+            self.Pipeline0Sink.queue_draw()  # Trigger redraw
+        except q_lib.Empty:
+            pass
+        return GLib.SOURCE_CONTINUE
+
+    def on_frame_received_pipe1(self):
+        if (self.Pipeline1 == None):
+            return GLib.SOURCE_CONTINUE
+        
+        try:
+            # Use non-blocking get to ensure the UI thread never hangs
+            self.Pipeline1ImageArray = self.queue1.get_nowait()
+            self.Pipeline1Sink.queue_draw()  # Trigger redraw
+        except q_lib.Empty:
+            pass
+        return GLib.SOURCE_CONTINUE
+
+    def on_draw_pipe0(self, widget, cr):
+        allocation = widget.get_allocation()
+
+        if hasattr(self, 'Pipeline0ImageArray') and (self.Pipeline0closing == False):
+            h, w, _ = self.Pipeline0ImageArray.shape
+            if w > 0 and h > 0:
+                scale = min(allocation.width / w, allocation.height / h)
+                cr.translate((allocation.width - w * scale) / 2, (allocation.height - h * scale) / 2)
+                cr.scale(scale, scale)
+
+            data = self.Pipeline0ImageArray.tobytes()
+            pixbuf = GdkPixbuf.Pixbuf.new_from_data(
+                data, GdkPixbuf.Colorspace.RGB, False, 8, w, h, w * 3, None, None
+            )
+            Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
+            cr.paint()
+        return GLib.SOURCE_REMOVE
+
+    def on_draw_pipe1(self, widget, cr):
+        allocation = widget.get_allocation()
+
+        if hasattr(self, 'Pipeline1ImageArray') and (self.Pipeline1closing == False):
+            h, w, _ = self.Pipeline1ImageArray.shape
+            if w > 0 and h > 0:
+                scale = min(allocation.width / w, allocation.height / h)
+                cr.translate((allocation.width - w * scale) / 2, (allocation.height - h * scale) / 2)
+                cr.scale(scale, scale)
+
+            data = self.Pipeline1ImageArray.tobytes()
+            pixbuf = GdkPixbuf.Pixbuf.new_from_data(
+                data, GdkPixbuf.Colorspace.RGB, False, 8, w, h, w * 3, None, None
+            )
+            Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
+            cr.paint()
+        return GLib.SOURCE_REMOVE

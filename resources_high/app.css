@@ -86,13 +86,14 @@
   }
 
 .label_l {
-	font-size: 3rem;
+	font-size: 4rem;
 	font-weight: bold;
 	color: rgb(255, 255, 255);
  }
 
 .label_l_m {
-	font-size: 3rem;
+	font-family: Consolas, monaco, monospace;
+	font-size: 4rem;
 	font-weight: bold;
 	color: rgb(255, 0, 163);
 }

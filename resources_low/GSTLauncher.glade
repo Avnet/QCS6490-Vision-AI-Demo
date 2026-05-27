@@ -12,16 +12,6 @@
     <property name="can_focus">False</property>
     <property name="pixbuf">close.png</property>
   </object>
-  <object class="GtkImage" id="Info">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="pixbuf">info.png</property>
-  </object>
-  <object class="GtkImage" id="Quit">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="pixbuf">exit.png</property>
-  </object>
   <object class="GtkDialog" id="aboutWindow">
     <property name="can_focus">False</property>
     <property name="type">popup</property>
@@ -312,6 +302,16 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkImage" id="Info">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="pixbuf">info.png</property>
+  </object>
+  <object class="GtkImage" id="Quit">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="pixbuf">exit.png</property>
   </object>
   <object class="GtkDialog" id="dialogWindow">
     <property name="name">dialogWindow</property>
@@ -685,22 +685,13 @@
                     <property name="ratio">1.3300000429153442</property>
                     <property name="obey_child">False</property>
                     <child>
-                      <object class="GtkBox" id="videosink0">
+                      <object class="GtkDrawingArea" id="videosink0">
                         <property name="name">videosink0</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="no_show_all">True</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
+                        <signal name="draw" handler="on_draw_pipe0" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -722,22 +713,13 @@
                     <property name="ratio">1.3300000429153442</property>
                     <property name="obey_child">False</property>
                     <child>
-                      <object class="GtkBox" id="videosink1">
+                      <object class="GtkDrawingArea" id="videosink1">
                         <property name="name">videosink1</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="no_show_all">True</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
+                        <signal name="draw" handler="on_draw_pipe1" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -794,7 +776,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">CPU Usage, Avg</property>
+                    <property name="label" translatable="yes">CPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -829,7 +811,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">LPDDR5 Usage</property>
+                    <property name="label" translatable="yes">DDR use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -845,7 +827,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">GPU Usage</property>
+                    <property name="label" translatable="yes">GPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -861,7 +843,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">DSP Usage</property>
+                    <property name="label" translatable="yes">NPU use</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -1101,7 +1083,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">CPU Max</property>
+                    <property name="label" translatable="yes">CPU</property>
                     <style>
                       <class name="label_l"/>
                     </style>
@@ -1136,7 +1118,7 @@
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
                     <property name="valign">center</property>
-                    <property name="label" translatable="yes">LPDDR5</property>
+                    <property name="label" translatable="yes">DDR</property>
                     <style>
                       <class name="label_l"/>
                     </style>

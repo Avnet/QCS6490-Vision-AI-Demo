@@ -5,7 +5,7 @@ import subprocess
 GRAPH_SAMPLE_WINDOW_SIZE_s = 31
 HW_SAMPLING_PERIOD_ms = 250
 GRAPH_DRAW_PERIOD_ms = 30
-AUTOMATIC_DEMO_SWITCH_s = 60
+AUTOMATIC_DEMO_SWITCH_s = 120
 QUIT_CLEANUP_DELAY_ms = 1000
 
 GRAPH_SAMPLE_SIZE = int(GRAPH_SAMPLE_WINDOW_SIZE_s * 1000 / GRAPH_DRAW_PERIOD_ms)
@@ -28,60 +28,50 @@ TRIA_GREEN_RGBH = (0x22, 0xB1, 0x4C)
 # WARN: These commands will be processed by application. Tags like <TAG> are likely placeholder
 
 # Having one default is fine, as we can extrapolate for the other window
-DEFAULT_LEFT_WINDOW = "gtksink name=\"videosink\""
-DEFAULT_DUAL_WINDOW = "gtksink name=\"videosink\""
+DISPLAY_SINK = 'fpsdisplaysink text-overlay=true video-sink="videoconvert ! video/x-raw,format=RGB ! appsink name=videosink emit-signals=true sync=false"'
 
-# TODO: add FPS support for camera?
-# TODO: What is the most reasonable caps res out of camera? Seems to be 640x480 when running two usb 2.0 cams
-CAMERA = f"<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! queue ! qtivcomposer name=mixer ! <SINGLE_DISPLAY>"
+QUEUE_LITE = 'queue max-size-buffers=1 leaky=downstream flush-on-eos=1 '
 
-POSE_DETECTION = "<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
+USB_CAM_CAPS = ' ! qtivtransform ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 '
+
+MIPI_CAM_CAPS = ' ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! identity '
+
+QTIM_TFLITE = 'qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options="QNNExternalDelegate,backend_type=htp;"'
+
+CAMERA = f'<DATA_SRC> ! {QUEUE_LITE} ! qtivcomposer name=mixer ! qtivtransform ! video/x-raw,format=NV12 ! {DISPLAY_SINK}'
+
+POSE_DETECTION = f'<DATA_SRC> ! tee name=split \
+split. ! {QUEUE_LITE} ! qtivcomposer name=mixer ! {DISPLAY_SINK} \
+split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/hrnet_pose_quantized.tflite ! {QUEUE_LITE} ! \
+qtimlpostprocess results=2 module=hrnet labels=/etc/labels/hrnet_pose.json settings=/etc/labels/hrnet_settings.json ! \
+qtivtransform ! video/x-raw,format=BGRA,width=640,height=360 ! {QUEUE_LITE} ! mixer.'
+
+CLASSIFICATION = f'<DATA_SRC> ! tee name=split \
+split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::position="<30, 30>" sink_1::dimensions="<480, 480>" ! {QUEUE_LITE} ! {DISPLAY_SINK} \
+split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/inception_v3_quantized.tflite ! {QUEUE_LITE} ! \
+qtimlpostprocess settings="{{\\"confidence\\": 40.0}}" results=2 module=mobilenet-softmax labels=/etc/labels/classification.json ! \
+qtivtransform ! video/x-raw,format=BGRA,width=640,height=480 ! {QUEUE_LITE} ! mixer.'
+
+OBJECT_DETECTION = f'<DATA_SRC> ! \
 tee name=split \
-split. ! queue ! qtivcomposer name=mixer ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so \
-external-delegate-options=\"QNNExternalDelegate,backend_type=htp;\" model=/etc/models/hrnet_pose_quantized.tflite ! queue ! \
-qtimlvpose threshold=51.0 results=2 module=hrnet labels=/etc/labels/hrnet_pose.labels \
-constants=\"hrnet,q-offsets=<8.0>,q-scales=<0.0040499246679246426>;\" ! video/x-raw,format=BGRA,width=640,height=480 ! mixer."
+split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::dimensions="<640,480>" ! {QUEUE_LITE} ! {DISPLAY_SINK} \
+split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/yolox_quantized.tflite ! {QUEUE_LITE} ! \
+qtimlpostprocess settings="{{\\"confidence\\": 75.0}}" results=10 module=yolov8 labels=/etc/labels/yolox.json ! \
+qtivtransform ! video/x-raw,format=BGRA,width=640,height=360 ! {QUEUE_LITE} ! mixer.'
 
-CLASSIFICATION = '<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
-tee name=split \
-split. ! queue ! qtivcomposer name=mixer sink_1::position="<30,30>" sink_1::dimensions="<320, 180>" ! queue ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so \
-external-delegate-options="QNNExternalDelegate,backend_type=htp;" model=/etc/models/inception_v3_quantized.tflite ! queue ! \
-qtimlvclassification threshold=40.0 results=2 module=mobilenet labels=/etc/labels/classification.labels \
-constants="Inceptionv3,q-offsets=<38.0>,q-scales=<0.17039915919303894>;" ! video/x-raw,format=BGRA,width=640,height=360 ! queue ! mixer.'
+DEPTH_SEGMENTATION = f'<DATA_SRC> ! tee name=split \
+split. ! {QUEUE_LITE} ! qtivcomposer background=0 name=dual \
+sink_0::position=<0,0> sink_0::dimensions=<640,480> \
+sink_1::position=<0,480> sink_1::dimensions=<640,480> ! {QUEUE_LITE} ! {DISPLAY_SINK} \
+split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/midas_quantized.tflite ! {QUEUE_LITE} ! \
+qtimlpostprocess module=midas-v2 labels=/etc/labels/monodepth.json ! \
+qtivtransform ! video/x-raw,width=640,height=480 ! {QUEUE_LITE} ! dual.sink_1'
 
-OBJECT_DETECTION = '<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
-tee name=split \
-split. ! queue ! qtivcomposer name=mixer1 ! queue ! <SINGLE_DISPLAY> \
-split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options="QNNExternalDelegate,backend_type=htp;" \
-model=/etc/models/yolox_quantized.tflite ! queue ! qtimlvdetection threshold=75.0 results=10 module=yolov8 labels=/etc/labels/yolox.labels \
-constants="YoloV8,q-offsets=<51.0,0.0,0.0>,q-scales=<3.9152722358703613,0.0037870765663683414,1.0>;" \
-! video/x-raw,format=BGRA,width=640,height=480 ! queue ! mixer1.'
-
-DEPTH_SEGMENTATION = "<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! \
-    tee name=split \
-    split. ! queue ! qtivcomposer background=0 name=dual \
-        sink_0::position=\<0,0\> sink_0::dimensions=\<960,720\> \
-        sink_1::position=\<960,0\> sink_1::dimensions=\<960,720\> \
-    ! queue ! <DUAL_DISPLAY> \
-    split. ! queue ! qtimlvconverter ! queue ! \
-        qtimltflite delegate=external \
-            external-delegate-path=libQnnTFLiteDelegate.so \
-            external-delegate-options=QNNExternalDelegate,backend_type=htp \
-            model=/etc/models/midas_quantized.tflite ! queue ! \
-        qtimlvsegmentation module=midas-v2 labels=/etc/labels/monodepth.labels \
-            constants=\"Midas,q-offsets=<0.0>,q-scales=<4.716535568237305>;\" ! \
-        video/x-raw,width=960,height=720 ! queue ! dual.sink_1"
-
-SEGMENTATION = '<DATA_SRC> ! qtivtransform ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! queue ! \
-    tee name=split \
-    split. ! queue ! qtivcomposer name=mixer sink_1::alpha=0.50 ! queue ! <SINGLE_DISPLAY> \
-    split. ! queue ! qtimlvconverter ! queue ! qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so \
-    external-delegate-options="QNNExternalDelegate,backend_type=htp;" model=/etc/models/deeplabv3_plus_mobilenet_quantized.tflite ! queue ! \
-    qtimlvsegmentation module=deeplab-argmax labels=/etc/labels/deeplabv3_resnet50.labels constants="deeplab,q-offsets=<0.0>,q-scales=<1.0>;" ! \
-    video/x-raw,width=256,height=144 ! queue ! mixer.'
-
+SEGMENTATION = f'<DATA_SRC> ! tee name=split \
+split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::alpha=0.5 ! {QUEUE_LITE} ! {DISPLAY_SINK} \
+split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/deeplabv3_plus_mobilenet_quantized.tflite ! {QUEUE_LITE} ! \
+qtimlpostprocess module=deeplab-argmax labels=/etc/labels/deeplabv3_resnet50.json ! \
+qtivtransform ! video/x-raw,width=256,height=144 ! {QUEUE_LITE} ! mixer.'
 
 APP_NAME = f"QCS6490 Vision AI"
 
@@ -141,4 +131,4 @@ def app_version():
         return "unknown"
 
 
-APP_HEADER = f"{APP_NAME} v({app_version()})"
+APP_HEADER = f"{APP_NAME}"

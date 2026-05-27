@@ -98,10 +98,9 @@ class QProfProcess(threading.Thread):
             print("Terminating QProf subprocess...")
             try:
                 self.p.terminate()
-                self.p.wait(timeout=1)
+                self.p.wait(timeout=2)
             except (ProcessLookupError, subprocess.TimeoutExpired, AttributeError):
                 pass # Already gone or couldn't be killed.
-
 
     def get_cpu_usage_pct(self):
         return round(self.CPU, 2)

@@ -209,56 +209,6 @@ def draw_axes_and_labels(
     cr.restore()
     return width, height
 
-
-#def draw_graph_legend(label_color_map, width, cr, legend_x_width=None):
-#    """
-#    Draw the legend for the graph, returning the x position of the legend
-#
-#    Args:
-#        label_color_map: Dict of label to RGB color tuple
-#        width: Width of the graph area
-#        cr: Cairo context
-#        legend_x_width: Width of the legend box. If None, the width is determined by the labels
-#    """
-#    # --- Draw Legend ---
-#    # TODO: Scale by res?
-#    legend_margin_x = 20  # Distance from the right edge
-#    legend_margin_y = 10  # Distance from the top edge
-#    box_size = 20  # Size of the color box
-#    spacing = 30  # Vertical spacing between entries
-#    legend_padding_x = 5
-#
-#    cr.select_font_face("Sans", 0, 1)  # Bold weight & normal slant
-#    cr.set_font_size(10)
-#
-#    text_guess_width = 11 * max(len(label) for label, _ in label_color_map.items())
-#    legend_x = (
-#        width - legend_x_width
-#        if legend_x_width
-#        else width - legend_margin_x - text_guess_width - box_size
-#    )
-#
-#    # Tuning offset variable
-#    for i, (label, color) in enumerate(label_color_map.items()):
-#        item_y = legend_margin_y + i * spacing
-#
-#        # Draw color box
-#        cr.set_source_rgb(*color)
-#        cr.rectangle(legend_x, item_y, box_size, box_size)
-#        cr.fill()
-#
-#        # Draw label text in white
-#        cr.set_source_rgb(1, 1, 1)
-#        text_x = legend_x + box_size + legend_padding_x
-#        text_y = (
-#            item_y + box_size - 5
-#        )  # Shift text slightly so it's vertically centered
-#        cr.move_to(text_x, text_y)
-#        cr.show_text(label.upper())
-#
-#    return legend_x
-
-
 def draw_graph_data(
     data_map,
     data_color_map,
