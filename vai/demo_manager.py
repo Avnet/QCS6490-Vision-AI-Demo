@@ -358,7 +358,6 @@ class DemoManager:
         self.eventHandler.DataGrid = self.builder.get_object("DataGrid")
         self.eventHandler.BottomBox = self.builder.get_object("BottomBox")
         self.eventHandler.DrawArea1 = self.builder.get_object("videosink0")
-        self.eventHandler.DrawArea2 = self.builder.get_object("videosink1")
         self.eventHandler.set_video_sink(0, self.builder.get_object("videosink0"))
         self.eventHandler.set_video_sink(1, self.builder.get_object("videosink1"))
         self.eventHandler.GraphDrawAreaTop = self.builder.get_object("GraphDrawAreaTop")

@@ -27,51 +27,73 @@ TRIA_GREEN_RGBH = (0x22, 0xB1, 0x4C)
 
 # WARN: These commands will be processed by application. Tags like <TAG> are likely placeholder
 
-# Having one default is fine, as we can extrapolate for the other window
-DISPLAY_SINK = 'fpsdisplaysink text-overlay=true video-sink="videoconvert ! video/x-raw,format=RGB ! appsink name=videosink emit-signals=true sync=false"'
-
 QUEUE_LITE = 'queue max-size-buffers=1 leaky=downstream flush-on-eos=1 '
 
-USB_CAM_CAPS = ' ! qtivtransform ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 '
+USB_CAM_CAPS  = ' ! qtivtransform ! video/x-raw,format=NV12,width=640,height=480,framerate=30/1 '
+# compression=ubwc labels the DMA-BUF as UBWC-compressed so the consumer-side
+# capsfilter after qtisocketsrc can assert the same flag, telling hardware
+# elements (qtimlvconverter, qtivtransform) to take the hardware path.
+MIPI_CAM_CAPS = ' ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1,compression=ubwc '
 
-MIPI_CAM_CAPS = ' ! video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1 ! identity '
+# Unix domain socket paths for the qtisocketsink/qtisocketsrc DMA-BUF bridge.
+CAM_SOCKET_0 = '/tmp/vai_cam0.sock'
+CAM_SOCKET_1 = '/tmp/vai_cam1.sock'
 
 QTIM_TFLITE = 'qtimltflite delegate=external external-delegate-path=libQnnTFLiteDelegate.so external-delegate-options="QNNExternalDelegate,backend_type=htp;"'
 
-CAMERA = f'<DATA_SRC> ! {QUEUE_LITE} ! qtivcomposer name=mixer ! qtivtransform ! video/x-raw,format=NV12 ! {DISPLAY_SINK}'
+_Q = QUEUE_LITE
 
-POSE_DETECTION = f'<DATA_SRC> ! tee name=split \
-split. ! {QUEUE_LITE} ! qtivcomposer name=mixer ! {DISPLAY_SINK} \
-split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/hrnet_pose_quantized.tflite ! {QUEUE_LITE} ! \
-qtimlpostprocess results=2 module=hrnet labels=/etc/labels/hrnet_pose.json settings=/etc/labels/hrnet_settings.json ! \
-qtivtransform ! video/x-raw,format=BGRA,width=640,height=360 ! {QUEUE_LITE} ! mixer.'
+# Camera branch: NV12_Q08C UBWC → hardware BGRA conversion → CPU-accessible appsink.
+# qtivtransform here produces scanout-linear BGRA that extract_dup() can mmap.
+_CAM_SINK = (
+    f'! {_Q}! qtivtransform ! video/x-raw,format=BGRA,width=640,height=480 '
+    f'! {_Q}! appsink name=videosink emit-signals=true sync=false'
+)
 
-CLASSIFICATION = f'<DATA_SRC> ! tee name=split \
-split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::position="<30, 30>" sink_1::dimensions="<480, 480>" ! {QUEUE_LITE} ! {DISPLAY_SINK} \
-split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/inception_v3_quantized.tflite ! {QUEUE_LITE} ! \
-qtimlpostprocess settings="{{\\"confidence\\": 40.0}}" results=2 module=mobilenet-softmax labels=/etc/labels/classification.json ! \
-qtivtransform ! video/x-raw,format=BGRA,width=640,height=480 ! {QUEUE_LITE} ! mixer.'
+# ML overlay branch terminal: videoconvert output is always CPU-accessible.
+_ML_SINK = f'! {_Q}! appsink name=mlsink emit-signals=true sync=false'
 
-OBJECT_DETECTION = f'<DATA_SRC> ! \
-tee name=split \
-split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::dimensions="<640,480>" ! {QUEUE_LITE} ! {DISPLAY_SINK} \
-split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/yolox_quantized.tflite ! {QUEUE_LITE} ! \
-qtimlpostprocess settings="{{\\"confidence\\": 75.0}}" results=10 module=yolov8 labels=/etc/labels/yolox.json ! \
-qtivtransform ! video/x-raw,format=BGRA,width=640,height=360 ! {QUEUE_LITE} ! mixer.'
+CAMERA = f'<DATA_SRC> {_CAM_SINK}'
 
-DEPTH_SEGMENTATION = f'<DATA_SRC> ! tee name=split \
-split. ! {QUEUE_LITE} ! qtivcomposer background=0 name=dual \
-sink_0::position=<0,0> sink_0::dimensions=<640,480> \
-sink_1::position=<0,480> sink_1::dimensions=<640,480> ! {QUEUE_LITE} ! {DISPLAY_SINK} \
-split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/midas_quantized.tflite ! {QUEUE_LITE} ! \
-qtimlpostprocess module=midas-v2 labels=/etc/labels/monodepth.json ! \
-qtivtransform ! video/x-raw,width=640,height=480 ! {QUEUE_LITE} ! dual.sink_1'
+POSE_DETECTION = (
+    f'<DATA_SRC> ! tee name=split '
+    f'split. {_CAM_SINK} '
+    f'split. ! {_Q}! qtimlvconverter ! {_Q}! {QTIM_TFLITE} model=/etc/models/hrnet_pose_quantized.tflite '
+    f'! {_Q}! qtimlpostprocess results=2 module=hrnet labels=/etc/labels/hrnet_pose.json settings=/etc/labels/hrnet_settings.json '
+    f'! videoconvert ! video/x-raw,format=BGRA,width=640,height=360 {_ML_SINK}'
+)
 
-SEGMENTATION = f'<DATA_SRC> ! tee name=split \
-split. ! {QUEUE_LITE} ! qtivcomposer name=mixer sink_1::alpha=0.5 ! {QUEUE_LITE} ! {DISPLAY_SINK} \
-split. ! {QUEUE_LITE} ! qtimlvconverter ! {QUEUE_LITE} ! {QTIM_TFLITE} model=/etc/models/deeplabv3_plus_mobilenet_quantized.tflite ! {QUEUE_LITE} ! \
-qtimlpostprocess module=deeplab-argmax labels=/etc/labels/deeplabv3_resnet50.json ! \
-qtivtransform ! video/x-raw,width=256,height=144 ! {QUEUE_LITE} ! mixer.'
+CLASSIFICATION = (
+    f'<DATA_SRC> ! tee name=split '
+    f'split. {_CAM_SINK} '
+    f'split. ! {_Q}! qtimlvconverter ! {_Q}! {QTIM_TFLITE} model=/etc/models/inception_v3_quantized.tflite '
+    f'! {_Q}! qtimlpostprocess settings="{{\\"confidence\\": 40.0}}" results=2 module=mobilenet-softmax labels=/etc/labels/classification.json '
+    f'! videoconvert ! video/x-raw,format=BGRA,width=640,height=480 {_ML_SINK}'
+)
+
+OBJECT_DETECTION = (
+    f'<DATA_SRC> ! tee name=split '
+    f'split. {_CAM_SINK} '
+    f'split. ! {_Q}! qtimlvconverter ! {_Q}! {QTIM_TFLITE} model=/etc/models/yolox_quantized.tflite '
+    f'! {_Q}! qtimlpostprocess settings="{{\\"confidence\\": 75.0}}" results=10 module=yolov8 labels=/etc/labels/yolox.json '
+    f'! videoconvert ! video/x-raw,format=BGRA,width=640,height=360 {_ML_SINK}'
+)
+
+DEPTH_SEGMENTATION = (
+    f'<DATA_SRC> ! tee name=split '
+    f'split. {_CAM_SINK} '
+    f'split. ! {_Q}! qtimlvconverter ! {_Q}! {QTIM_TFLITE} model=/etc/models/midas_quantized.tflite '
+    f'! {_Q}! qtimlpostprocess module=midas-v2 labels=/etc/labels/monodepth.json '
+    f'! videoconvert ! video/x-raw,format=BGRA,width=640,height=480 {_ML_SINK}'
+)
+
+SEGMENTATION = (
+    f'<DATA_SRC> ! tee name=split '
+    f'split. {_CAM_SINK} '
+    f'split. ! {_Q}! qtimlvconverter ! {_Q}! {QTIM_TFLITE} model=/etc/models/deeplabv3_plus_mobilenet_quantized.tflite '
+    f'! {_Q}! qtimlpostprocess module=deeplab-argmax labels=/etc/labels/deeplabv3_resnet50.json '
+    f'! videoconvert ! video/x-raw,format=BGRA,width=256,height=144 {_ML_SINK}'
+)
 
 APP_NAME = f"QCS6490 Vision AI"
 

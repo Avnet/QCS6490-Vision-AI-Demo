@@ -2,8 +2,8 @@ import multiprocessing as mp
 import pathlib
 import subprocess
 import os
-from vai.qprofile import QProfProcess
 from vai.pipeline_process import gstreamer_process
+from vai.camera_process import camera_capture_process
 import time
 import threading
 import queue as q_lib
@@ -21,6 +21,8 @@ from .common import (
     CPU_UTIL_KEY,
     USB_CAM_CAPS,
     MIPI_CAM_CAPS,
+    CAM_SOCKET_0,
+    CAM_SOCKET_1,
     DEPTH_SEGMENTATION,
     GPU_THERMAL_KEY,
     GPU_UTIL_KEY,
@@ -39,18 +41,8 @@ from .temp_profile import get_cpu_gpu_mem_temps
 # needed to release gstreamer with cv2
 os.environ['OPENCV_VIDEOIO_PRIORITY_MSMF'] = '0'
 
-# Tuning variable to adjust the height of the video display
-HEIGHT_OFFSET = 17
-MAX_WINDOW_WIDTH = 1920 // 2
-MAX_WINDOW_HEIGHT = 720
 MIPI_CSI_CAMERA_SCAN_TIMEOUT = 5
 CAMERA_SCAN_DELAY_ms = 3000
-CLOSE_APPLICATION_DELAY = 2
-PIPELINE_THREAD_PAUSE_s = 0.1
-
-DUAL_WINDOW_DEMOS = ["add drop down items here if needed"]
-
-PIPELINE_HEALTH_SIGNAL = "identity signal-handoffs=true name=id"
 
 class Handler:
     def __init__(self):
@@ -68,7 +60,7 @@ class Handler:
             DEPTH_SEGMENTATION,
         ]
 
-        self.QProf = QProfProcess()
+        self.QProf = None
         self.MainWindowShown = False
         self.MainWindow = None
         self.aboutWindow = None
@@ -85,16 +77,11 @@ class Handler:
         self.DataGrid = None
         self.BottomBox = None
         self.DrawArea1 = None
-        self.DrawArea2 = None
-        self.AspectFrame1 = None
-        self.AspectFrame2 = None
         self.GraphDrawAreaTop = None
         self.GraphDrawAreaBottom = None
         self.demo_selection0 = None
         self.demo_selection1 = None
         self.systemCameras = []
-        self.dualDemoRunning0 = False
-        self.dualDemoRunning1 = False
         self.CycleDemo0 = False
         self.CycleDemo1 = False
         self.demoSelection0Cnt = 0
@@ -108,6 +95,16 @@ class Handler:
         self.Pipeline1Sink = None
         self.Pipeline0StopEvent = mp.Event()
         self.Pipeline1StopEvent = mp.Event()
+
+        # Persistent camera processes — one per camera slot, kept alive across
+        # ML demo switches so the QMMF/ISP session is never torn down between
+        # pipeline changes. Frames are forwarded via qtisocketsink/qtisocketsrc
+        # as DMA-BUF fds, preserving GBM memory for hardware ML elements.
+        # Started in _enable_camera_ui after the QMMF probe cleanup window.
+        self.CameraProcess0   = None
+        self.CameraProcess1   = None
+        self.Camera0StopEvent = mp.Event()
+        self.Camera1StopEvent = mp.Event()
 
         GLib.timeout_add(10, self.on_frame_received_pipe0)
         GLib.timeout_add(10, self.on_frame_received_pipe1)
@@ -137,26 +134,36 @@ class Handler:
             0: ('Pipeline0', 'Pipeline0StopEvent', 'queue0', 'Pipeline0closing'),
             1: ('Pipeline1', 'Pipeline1StopEvent', 'queue1', 'Pipeline1closing'),
         }
-        
+
         attr_name, stop_event_attr, queue_attr, closing_attr = pipelines[index]
         stop_event = getattr(self, stop_event_attr)
-        queue = getattr(self, queue_attr)
 
         if getattr(self, attr_name) is not None:
             self.StopPipeline(index)
             time.sleep(0.5)
-        
+        else:
+            time.sleep(0.3)
+
+        # Always create a fresh output queue to avoid state from a previous subprocess.
+        queue = mp.Queue(maxsize=10)
+        setattr(self, queue_attr, queue)
+
         print(f"Initializing GStreamer subprocess in pipeline {index}...")
         stop_event.clear()
-        process = mp.Process(target=gstreamer_process, args=(command, queue, stop_event))
-        
+        # Use spawn (not fork) so the subprocess starts with a clean EGL/display
+        # state. With fork, the child inherits GTK's EGL context from the parent,
+        # causing qtimlvconverter and qtivtransform to fail their GLES init.
+        process = mp.get_context('spawn').Process(
+            target=gstreamer_process,
+            args=(command, queue, stop_event))
+
         try:
             setattr(self, closing_attr, False)
             process.start()
             setattr(self, attr_name, process)
         except Exception as e:
             setattr(self, closing_attr, True)
-            print(f"Unable to start pipeline {index}: {e}")   
+            print(f"Unable to start pipeline {index}: {e}")
 
     def StopPipeline(self, index):
         pipelines = {
@@ -176,7 +183,7 @@ class Handler:
         stop_event.set()
         
         start_time = time.monotonic()
-        while current_pipe.is_alive() and (time.monotonic() - start_time) < 10.0:
+        while current_pipe.is_alive() and (time.monotonic() - start_time) < 12.0:
             try:
                 queue.get_nowait()
             except q_lib.Empty:
@@ -191,27 +198,106 @@ class Handler:
                 current_pipe.join()
 
         setattr(self, closing_attr, True)
-        setattr(self, attr_name, None)  # Clear the pipeline reference
-        
-        print("Pipeline stopped and cleaned up.")   
+        setattr(self, attr_name, None)
+        print("Pipeline stopped and cleaned up.")
+
+    def StartCamera(self, index):
+        """Start the persistent camera capture process for one slot."""
+        cams = {
+            0: ('CameraProcess0', 'Camera0StopEvent', CAM_SOCKET_0, 'cam1', 'cam1Type'),
+            1: ('CameraProcess1', 'Camera1StopEvent', CAM_SOCKET_1, 'cam2', 'cam2Type'),
+        }
+        proc_attr, evt_attr, socket_path, cam_attr, type_attr = cams[index]
+
+        cam      = getattr(self, cam_attr, None)
+        cam_type = getattr(self, type_attr, None)
+        if cam is None:
+            return
+
+        if cam_type == 'usb':
+            # io-mode=4 exports DMA-BUF from the V4L2 driver so qtivtransform
+            # and downstream QTI hardware elements receive GBM memory.
+            source = (f"v4l2src io-mode=4 device={cam} name=videosource"
+                      + USB_CAM_CAPS.rstrip())
+        elif cam_type == 'mipi':
+            # video_0::type=preview enables QMMF preview mode on the source pad.
+            # compression=ubwc is propagated via MIPI_CAM_CAPS so the consumer
+            # capsfilter can assert the same flag after qtisocketsrc.
+            source = (f"qtiqmmfsrc {cam} video_0::type=preview name=videosource"
+                      + MIPI_CAM_CAPS.rstrip())
+        else:
+            return
+
+        print(f"Starting persistent camera process {index}: {source}")
+        stop_event = mp.Event()
+        setattr(self, evt_attr, stop_event)
+
+        # Use spawn for a clean EGL context — same reason as the ML process.
+        proc = mp.get_context('spawn').Process(
+            target=camera_capture_process,
+            args=(source, socket_path, stop_event))
+        proc.start()
+        setattr(self, proc_attr, proc)
+
+    def StopCamera(self, index):
+        """Stop the persistent camera capture process (called on app exit)."""
+        cams = {
+            0: ('CameraProcess0', 'Camera0StopEvent'),
+            1: ('CameraProcess1', 'Camera1StopEvent'),
+        }
+        proc_attr, evt_attr = cams[index]
+        proc       = getattr(self, proc_attr)
+        stop_event = getattr(self, evt_attr)
+        if proc is None:
+            return
+
+        print(f"Stopping camera process {index}...")
+        stop_event.set()
+        start = time.monotonic()
+        while proc.is_alive() and (time.monotonic() - start) < 15.0:
+            time.sleep(0.1)
+        if proc.is_alive():
+            print(f"Camera {index} process did not stop gracefully, terminating...")
+            proc.terminate()
+            proc.join(timeout=2)
+            if proc.is_alive():
+                proc.kill()
+                proc.join()
+        setattr(self, proc_attr, None)
+        print(f"Camera process {index} stopped.")
 
     def update_camera_information(self):
         self.cameraCount = self.scan_for_connected_cameras()
-        self.cam1 = self.systemCameras[0][1] if self.cameraCount > 0 else None
+        self.cam1     = self.systemCameras[0][1] if self.cameraCount > 0 else None
         self.cam1Type = self.systemCameras[0][2] if self.cameraCount > 0 else None
-
-        self.cam2 = self.systemCameras[1][1] if self.cameraCount > 1 else None
+        self.cam2     = self.systemCameras[1][1] if self.cameraCount > 1 else None
         self.cam2Type = self.systemCameras[1][2] if self.cameraCount > 1 else None
-
-        if self.cam1:
-            self.demo_selection0.set_sensitive(True)
-
-        if self.cam2:
-            self.demo_selection1.set_sensitive(True)
 
         print(f"Using CAM1: {self.cam1}")
         print(f"Using CAM2: {self.cam2}")
         self.close_dialog(self)
+
+        # For MIPI cameras the probe opened and closed QMMF sessions. QMMF needs
+        # a few seconds to finish internal teardown before a new pipeline can open
+        # the same camera. Defer enabling the dropdowns so the user cannot start a
+        # pipeline before QMMF is ready. The GLib loop runs during this timer,
+        # allowing QMMF cleanup to proceed (blocking with get_state() here would
+        # prevent that cleanup and leave QMMF in a bad state).
+        has_mipi = any(t == 'mipi' for t in [self.cam1Type, self.cam2Type] if t)
+        delay_ms = 3000 if has_mipi else 500
+        GLib.timeout_add(delay_ms, self._enable_camera_ui)
+        return GLib.SOURCE_REMOVE
+
+    def _enable_camera_ui(self):
+        # Camera processes start here — after the 3 s QMMF probe cleanup window.
+        # The natural user-interaction delay before selecting a demo gives the
+        # camera processes time to start streaming before create() first runs.
+        if self.cam1:
+            self.StartCamera(0)
+            self.demo_selection0.set_sensitive(True)
+        if self.cam2:
+            self.StartCamera(1)
+            self.demo_selection1.set_sensitive(True)
         return GLib.SOURCE_REMOVE
         
     def _probe_mipi_camera(self, camera_index, timeout_s=MIPI_CSI_CAMERA_SCAN_TIMEOUT):
@@ -271,9 +357,13 @@ class Handler:
             print(f"  Failure: MIPI camera {camera_index} could not be opened (state change failed with: {state_change_return.value_nick}).")
             found = False
 
-        # Always clean up
+        # Always clean up. Do NOT call get_state() here — that would block the
+        # GLib main loop while QMMF processes its teardown messages, preventing
+        # QMMF from completing de-initialisation and leaving it in a corrupt state.
+        # The non-blocking timer in update_camera_information (_enable_camera_ui)
+        # gives QMMF the 3 s cleanup window it needs with the GLib loop running.
         pipeline.set_state(Gst.State.NULL)
-        
+
         return found
 
     def scan_for_connected_cameras(self):
@@ -380,6 +470,8 @@ class Handler:
 
         self.StopPipeline(0)
         self.StopPipeline(1)
+        self.StopCamera(0)
+        self.StopCamera(1)
 
         # Schedule the final shutdown sequence. This polling mechanism waits
         # for the async pipeline cleanup to complete.
@@ -413,24 +505,45 @@ class Handler:
             GLib.idle_add(self.show_message)
             GLib.timeout_add(CAMERA_SCAN_DELAY_ms, self.update_camera_information)
 
-    def _modify_command_pipeline(
-        self, command, stream_index
-    ):
-        """Modify GST pipeline by replacing placeholders with runtime values."""
-        if stream_index == 0 and self.cam1 != None:
-            if self.cam1Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam1} name=videosource" + USB_CAM_CAPS)
-                #command = command.replace("<DATA_SRC>",f"v4l2src io-mode=4 device={self.cam1} name=videosource" + USB_CAM_CAPS)
-            elif self.cam1Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam1} name=videosource" + MIPI_CAM_CAPS)
-        elif self.cam2 != None:
-            if self.cam2Type == "usb":
-                command = command.replace("<DATA_SRC>",f"v4l2src device={self.cam2} name=videosource" + USB_CAM_CAPS)
-            elif self.cam2Type == "mipi":
-                command = command.replace("<DATA_SRC>",f" qtiqmmfsrc {self.cam2} name=videosource" + MIPI_CAM_CAPS)
+    def _modify_command_pipeline(self, command, stream_index):
+        """Replace <DATA_SRC> with the qtisocketsrc for this camera slot.
+
+        The capsfilter immediately after qtisocketsrc must describe the exact
+        format the persistent camera process is sending over the socket:
+
+        - MIPI cameras send NV12_Q08C UBWC (see MIPI_CAM_CAPS). The capsfilter
+          must include compression=ubwc,interlace-mode=progressive,
+          colorimetry=bt601 so hardware elements (qtimlvconverter,
+          qtivtransform) recognise the DMA-BUF as UBWC and take the hardware
+          path instead of falling back to a software RGB copy.
+        - USB cameras are converted to plain linear NV12 by qtivtransform
+          before hitting the socket (see USB_CAM_CAPS) — asserting
+          compression=ubwc here would mismatch the real buffer and fail caps
+          negotiation, so the plain NV12 caps are used instead.
+        """
+        if stream_index == 0 and self.cam1 is not None:
+            socket_path = CAM_SOCKET_0
+            cam_type = self.cam1Type
+        elif self.cam2 is not None:
+            socket_path = CAM_SOCKET_1
+            cam_type = self.cam2Type
         else:
-            command = command.replace("<DATA_SRC>",f" videotestsrc name=videosource")
-            
+            # No camera: replace with a simple test-pattern pipeline that
+            # matches the expected videosink output format.
+            return (
+                'videotestsrc name=videosource '
+                '! video/x-raw,format=BGRA,width=640,height=480,framerate=30/1 '
+                '! appsink name=videosink emit-signals=true sync=false'
+            )
+
+        if cam_type == 'usb':
+            caps = 'video/x-raw,format=NV12,width=640,height=480,framerate=30/1'
+        else:
+            caps = ('video/x-raw,format=NV12_Q08C,width=640,height=480,framerate=30/1,'
+                    'compression=ubwc,interlace-mode=progressive,colorimetry=bt601')
+
+        src = f'qtisocketsrc socket={socket_path} ! {caps}'
+        command = command.replace('<DATA_SRC>', src)
         return command
 
     def SwitchPipeline0(self, combo):
