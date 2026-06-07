@@ -14,7 +14,7 @@ cleanup() {
     done
 
     # 2. Remove symlinks and recreate files with correct permissions
-    for logfile in /var/log/messages /var/log/daemon.log /var/log/debug /var/log/kern.log; do
+    for logfile in /var/log/messages /var/log/daemon.log /var/log/debug /var/log/kern.log /var/log/user.log /var/log/syslog; do
         rm -f "$logfile"
         touch "$logfile"
         chmod 644 "$logfile"
@@ -37,7 +37,7 @@ dmesg -n 1
 
 # 2. Redirect all active log files to /dev/null
 # This clears the space and prevents future growth
-for logfile in /var/log/messages /var/log/daemon.log /var/log/debug /var/log/kern.log; do
+for logfile in /var/log/messages /var/log/daemon.log /var/log/debug /var/log/kern.log /var/log/user.log /var/log/syslog; do
     rm -f "$logfile"
     ln -s /dev/null "$logfile"
 done
@@ -69,4 +69,4 @@ export ADSP_LOG_LEVEL=1
 export QTI_LOG_LEVEL=1
 export QNN_LOG_LEVEL=0    
 
-"$VISIONAI_PATH" 2>/dev/null
+"$VISIONAI_PATH" > /dev/null 2>&1
