@@ -18,13 +18,17 @@ def get_cpu_gpu_mem_temps():
                     f_tempValue = f_temp.read()
                 except:
                     f_tempValue = None
-                    
-                if f_tempValue:
-                    # Convert temperature from millidegrees Celsius to degrees Celsius
-                    temp_millicelsius = int(f_tempValue.strip())
-                    temp_celsius = temp_millicelsius / 1000.0
-                    thermal_zones[zone_id] = {"type": zone_type, "temperature": temp_celsius}
-                    
+
+            temp_celsius = None
+            if f_tempValue:
+                # Convert temperature from millidegrees Celsius to degrees Celsius
+                temp_millicelsius = int(f_tempValue.strip())
+                temp_celsius = temp_millicelsius / 1000.0
+                thermal_zones[zone_id] = {"type": zone_type, "temperature": temp_celsius}
+
+            if temp_celsius is None:
+                continue
+
             if re.match(r'cpu\d+-thermal', zone_type):
                 max_temp = max(max_temp, temp_celsius)
             elif zone_type == 'ddr-thermal':
