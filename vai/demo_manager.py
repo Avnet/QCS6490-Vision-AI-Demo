@@ -11,11 +11,12 @@ from vai.common import (CPU_THERMAL_KEY, CPU_UTIL_KEY,
                         MEM_THERMAL_KEY, MEM_UTIL_KEY, DSP_UTIL_KEY, TIME_KEY, 
                         TRIA_BLUE_RGBH, TRIA_PINK_RGBH, TRIA_YELLOW_RGBH, 
                         TRIA_GREEN_RGBH, GRAPH_SAMPLE_WINDOW_SIZE_s,
+                        GRAPH_DRAW_PERIOD_ms,
                         get_ema)
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 
 
 # --- Graphing constants ---
@@ -197,7 +198,6 @@ class DemoManager:
             return True
 
         if not self.util_data:
-            self.eventHandler.GraphDrawAreaTop.queue_draw()
             return True
         
         """Draw the util graph on the draw area"""
@@ -238,8 +238,6 @@ class DemoManager:
             y_lim=y_lim,
             res_tuple=self.main_window_dims,
         )
-
-        self.eventHandler.GraphDrawAreaTop.queue_draw()
 
         return True
 
@@ -285,8 +283,7 @@ class DemoManager:
             return
         
         if not self.thermal_data:
-            self.eventHandler.GraphDrawAreaBottom.queue_draw()
-            return True    
+            return True
             
         """Draw the graph on the draw area"""
 
@@ -325,8 +322,15 @@ class DemoManager:
             res_tuple=self.main_window_dims,
         )
 
-        self.eventHandler.GraphDrawAreaBottom.queue_draw()
         return True
+
+    def redraw_graphs(self):
+        """Throttled redraw trigger for both performance graphs (replaces self-queue_draw)."""
+        if self.eventHandler.GraphDrawAreaTop:
+            self.eventHandler.GraphDrawAreaTop.queue_draw()
+        if self.eventHandler.GraphDrawAreaBottom:
+            self.eventHandler.GraphDrawAreaBottom.queue_draw()
+        return GLib.SOURCE_CONTINUE
 
     def localApp(self):
         """Build application window and connect signals"""
@@ -381,6 +385,7 @@ class DemoManager:
         # TODO: Dynamic sizing, positioning
         self.eventHandler.GraphDrawAreaTop.connect("draw", self.on_util_graph_draw)
         self.eventHandler.GraphDrawAreaBottom.connect("draw", self.on_thermal_graph_draw)
+        GLib.timeout_add(GRAPH_DRAW_PERIOD_ms, self.redraw_graphs)
 
         self.eventHandler.QProf = QProfProcess()
         self.eventHandler.QProf.daemon = True # Ensure thread doesn't block app exit
