@@ -1,5 +1,5 @@
 import os
-os.environ["GST_DEBUG"] = "3"
+#os.environ["GST_DEBUG"] = "3"
 import queue as q_lib
 import numpy as np
 import gi

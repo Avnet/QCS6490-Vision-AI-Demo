@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "QCS6490 Vision AI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/visionai.py",
+            "python": "/usr/bin/python3",
+            "console": "integratedTerminal",
+            "env": {
+                "QMONITOR_BACKEND_LIB_PATH": "/var/QualcommProfiler/libs/backends/",
+                "LD_LIBRARY_PATH": "/var/QualcommProfiler/libs/",
+                "PATH": "/data/shared/QualcommProfiler/bins:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "XDG_RUNTIME_DIR": "/dev/socket/weston",
+                "WAYLAND_DISPLAY": "wayland-1",
+                "ADSP_LIBRARY_PATH": "/usr/lib/rfsa/adsp;/dsp",
+                "GST_DEBUG": "qtiml*:1",
+                "QNN_OPTIONS": "log_severity_level:3",
+                "ADSP_DEBUG": "0",
+                "FARPC_DEBUG_LEVEL": "0",
+                "ADSP_LOG_LEVEL": "1",
+                "QTI_LOG_LEVEL": "1",
+                "QNN_LOG_LEVEL": "0"
+            }
+        }
+    ]
+}
