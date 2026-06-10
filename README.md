@@ -39,6 +39,28 @@ The design integrates two utilities for performance monitoring:
 
 ![System Overview](https://github.com/user-attachments/assets/c1c6d54a-7cb9-438e-8bd9-0e5b8588bf13)
 
+### Persistent Camera Processes & Socket Bridging
+
+Each camera runs in its own long-lived subprocess, kept alive across ML model
+switches so the QMMF/ISP camera session is never torn down between demos.
+Frames are bridged into the active ML pipeline subprocess using GStreamer's
+`qtisocketsink` / `qtisocketsrc` plugins:
+
+- The persistent camera process (`qtiqmmfsrc` for MIPI, `v4l2src` for USB)
+  pushes frames to a `qtisocketsink` over a Unix domain socket
+  (e.g. `/tmp/vai_cam0.sock`), forwarded as DMA-BUF file descriptors.
+- The selected ML pipeline attaches via `qtisocketsrc` on the same socket,
+  with a capsfilter describing the exact buffer format being sent —
+  `NV12_Q08C` with `compression=ubwc` for MIPI cameras, or plain `NV12` for
+  USB cameras.
+- Matching the caps after `qtisocketsrc` lets hardware elements
+  (`qtimlvconverter`, `qtivtransform`) recognize UBWC-compressed DMA-BUF
+  memory and take the hardware-accelerated path instead of falling back to a
+  software copy.
+
+This design allows the AI model running on a camera to be switched on the
+fly without restarting the camera capture session.
+
 ---
 
 ## 🧰 Equipment List (As seen at Embedded World 2025)
